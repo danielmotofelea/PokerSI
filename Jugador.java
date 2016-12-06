@@ -31,7 +31,7 @@ public class Jugador {
     public void setFitness(int valor){
         fitness= valor;
     }
-    public void getFitness(){
+    public float getFitness(){
         return fitness;
     }    
     public float calcularFitness(int fichasGanadas, int fichasApostadas, int manosGanadas, int manosJugadas, float fitness){
