@@ -2,6 +2,12 @@ package Jugador;
 import java.util.* ;
 public class Jugador {
 
+    public int fichas, fichasGanadas, fichasApostadas, manosGanadas, manosJugadas;
+    public float fitness;
+    public int []identificacion;
+    public Carta []cartasEnMano;
+    public Carta []cartasComunes;
+    public ArrayList<Carta> mejorMano;
     public Jugador(){       // Constructor del Jugador
         int fichas = 0, fichasGanadas = 0, fichasApostadas = 0, manosGanadas = 0, manosJugadas = 0;
         float fitness = 0;
@@ -14,12 +20,13 @@ public class Jugador {
                    int manosJugadas, float fitness, int [] identificacion, String []cartasEnMano,
                    String []cartasComunes, ArrayList<Carta> mejorMano){
 
-        fichas = fichas;
-        fichasGanadas = fichasGanadas;
-        fichasApostadas = fichasApostadas;
-        manosGanadas = manosGanadas;
-        manosJugadas = manosJugadas;
-        fitness = fitness;
+        this.fichas = fichas;
+        this.fichasGanadas = fichasGanadas;
+        this.fichasApostadas = fichasApostadas;
+        this.manosGanadas = manosGanadas;
+        this.manosJugadas = manosJugadas;
+        this.fitness = fitness;
+
         for(int i=0; i<3; i++)
             identificacion[i] = 0;
         for(int j=0; j<2; j++)
@@ -28,13 +35,13 @@ public class Jugador {
             cartasComunes[k] = new Carta();
         mejorMano = new ArrayList<Carta>();
     }
-    public void setFitness(int valor){
-        fitness= valor;
+    public void setFitness(float valor){
+        fitness = valor;
     }
     public float getFitness(){
         return fitness;
-    }    
-    public float calcularFitness(int fichasGanadas, int fichasApostadas, int manosGanadas, int manosJugadas, float fitness){
+    }
+    public float calcularFitness(){
         // Como se calcula al final de cada mano tengo que ver como da por finalizada la partida Florin
         if((manosJugadas != 0) && (fichasApostadas != 0))
             fitness = ((manosGanadas/manosJugadas)*(fichasGanadas/fichasApostadas))/100;
@@ -43,11 +50,11 @@ public class Jugador {
         return fitness;
     }
 
-    public ArrayList<Carta> enseñarCartas(ArrayList<Carta> mejorMano){
+    public ArrayList<Carta> enseñarCartas(){
         return mejorMano;
     }
 
-    public ArrayList<Carta>[] verMejorMano(Carta [] cartasEnMano, Carta [] cartasComunes){
+    public ArrayList<Carta>[] verMejorMano(){
         // Suponiendo que Florin lo haya implementado asi
 
         ArrayList<Carta> manoProvisional = new ArrayList<Carta>();    // array creado para añadir las 7 cartas al borroso y que devuelva la mejor mano
