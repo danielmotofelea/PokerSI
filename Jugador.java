@@ -27,7 +27,7 @@ public class Jugador {
             cartasComunes[k] = new Carta();
     }
     public float calcularFitness(int fichasGanadas, int fichasApostadas, int manosGanadas, int manosJugadas, float fitness){
-        // Como se calcula al final de cada mano tengo que ver como da por finalizada la partida Florin
+        // Como se calcula al final de cada partida tengo que ver como da por finalizada la partida Florin
         if(manosGanadas != 0 || fichasGanadas != 0)
             fitness = fitness + calcularFitnessRecursivo();
         else
