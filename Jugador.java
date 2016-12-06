@@ -28,6 +28,12 @@ public class Jugador {
             cartasComunes[k] = new Carta();
         mejorMano = new ArrayList<Carta>();
     }
+    public void setFitness(int valor){
+        fitness= valor;
+    }
+    public void getFitness(){
+        return fitness;
+    }    
     public float calcularFitness(int fichasGanadas, int fichasApostadas, int manosGanadas, int manosJugadas, float fitness){
         // Como se calcula al final de cada mano tengo que ver como da por finalizada la partida Florin
         if((manosJugadas != 0) && (fichasApostadas != 0))
