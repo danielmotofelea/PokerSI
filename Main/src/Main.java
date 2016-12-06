@@ -44,7 +44,7 @@ public class Main {
         /** Se crean, de forma aleatoria, los 56 jugadores restantes de la primera generacion y se añaden a @generacion **/
 
         do{
-        /** Llamada al constructor Torneo(@generacion), para que distribuya a los jugadores por las mesas **/
+            /** Llamada al constructor Torneo(@generacion), para que distribuya a los jugadores por las mesas **/
 
         /** Una vez finaliza el torneo, deben devolverse los 8 finalistas para añadirlos a @finalistas
          * Esto se hará accediendo a finalistas(suponiendolo protected), en clase Torneo, y copiandolo mediante un for each
