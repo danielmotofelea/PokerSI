@@ -1,47 +1,65 @@
-package Jugador;
 import java.util.* ;
+package PokerSI;
+
 public class Jugador {
 
-    public int fichas, fichasGanadas, fichasApostadas, manosGanadas, manosJugadas;
-    public float fitness;
-    public int []identificacion;
-    public Carta []cartasEnMano;
-    public Carta []cartasComunes;
-    public ArrayList<Carta> mejorMano;
-    public Jugador(){       // Constructor del Jugador
-        int fichas = 0, fichasGanadas = 0, fichasApostadas = 0, manosGanadas = 0, manosJugadas = 0;
-        float fitness = 0;
-        int []identificacion = new int[3];              // Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador
-        Carta []cartasEnMano ;                          // Las dos cartas en mano que en principio los tomamos como strings
-        Carta []cartasComunes ;                         // Las 5 cartas comunes de la mesa para ver nuestra mejor mano
-        ArrayList<Carta> mejorMano;                     // La mejor combinacion de cartas sobre la mesa
-    }
-    public Jugador(int fichas, int fichasGanadas, int fichasApostadas, int manosGanadas,
-                   int manosJugadas, float fitness, int [] identificacion, String []cartasEnMano,
-                   String []cartasComunes, ArrayList<Carta> mejorMano){
+    protected int fichas;
+    protected int fichasGanadas;
+    protected int fichasApostadas;
+    protected int manosGanadas;
+    protected int manosJugadas;
+    //private float fitness;            En principio sobra, ya se verá si al final hace falta
+    private int []identificacion;
+    private Carta []cartasEnMano;
+    private Carta []cartasComunes;
+    private ArrayList<Carta> mejorMano;
 
+    public Jugador(){       // Constructor del Jugador
+        this.fichas = 0;
+        this.fichasGanadas = 0;
+        this.fichasApostadas = 0;
+        this.manosGanadas = 0;
+        this.manosJugadas = 0;
+        //this.fitness = 0;
+        this.identificacion = new int[3];              // Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador
+        this.cartasEnMano = new Carta[2];             // Las dos cartas en mano que en principio los tomamos como strings
+        this.cartasComunes = new Carta[5];            // Las 5 cartas comunes de la mesa para ver nuestra mejor mano
+        this.mejorMano = new ArrayList<Carta>();                    // La mejor combinacion de cartas sobre la mesa
+    }
+
+    public Jugador(int fichas, int fichasGanadas, int fichasApostadas, int manosGanadas,
+                   int manosJugadas, int [] identificacion, Carta []cartasEnMano,
+                   Carta []cartasComunes, ArrayList<Carta> mejorMano)
+    {
         this.fichas = fichas;
         this.fichasGanadas = fichasGanadas;
         this.fichasApostadas = fichasApostadas;
         this.manosGanadas = manosGanadas;
         this.manosJugadas = manosJugadas;
-        this.fitness = fitness;
+        //this.fitness = fitness;
 
         for(int i=0; i<3; i++)
-            identificacion[i] = 0;
+            this.identificacion[i] = 0;
         for(int j=0; j<2; j++)
-            cartasEnMano[j] = new Carta();
+            this.cartasEnMano[j] = new Carta();
         for(int k=0; k<5; k++)
-            cartasComunes[k] = new Carta();
-        mejorMano = new ArrayList<Carta>();
+            this.cartasComunes[k] = new Carta();
+
+        this.mejorMano = new ArrayList<Carta>();
     }
-    public void setFitness(float valor){
+
+    /*public void setFitness(float valor){
         fitness = valor;
-    }
-    public float getFitness(){
+    }*/
+
+    /*public float getFitness(){
         return fitness;
     }
+    En principio sobra, ya veremos si al final hace falta o no
+    */
+
     public float calcularFitness(){
+        float fitness; // En caso de que al final sea atributo de la clase, esta variable sobrará
         // Como se calcula al final de cada mano tengo que ver como da por finalizada la partida Florin
         if((manosJugadas != 0) && (fichasApostadas != 0))
             fitness = ((manosGanadas/manosJugadas)*(fichasGanadas/fichasApostadas))/100;
