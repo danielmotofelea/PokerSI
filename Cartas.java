@@ -5,12 +5,16 @@ package Version1;
  */
 
 public class Cartas {
-    private String Valor="";
-    private String Palo="";
+    private String Valor;
+    private String Palo;
 
     /**
      *Constructor de la carta, le pasamos el valor y el palo.
      */
+    public Cartas(){
+        this.Palo = "";
+        this.Valor = "";
+    }
     public Cartas(String Valor,String Palo){
         this.Palo=Palo;
         this.Valor=Valor;
