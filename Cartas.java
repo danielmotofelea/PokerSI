@@ -8,13 +8,14 @@ public class Cartas {
     private String Valor;
     private String Palo;
 
-    /**
-     *Constructor de la carta, le pasamos el valor y el palo.
-     */
+    // Constructor sin parametros para facilitar las inicializaciones en la clase Jugador
     public Cartas(){
         this.Palo = "";
         this.Valor = "";
     }
+    /**
+     *Constructor de la carta, le pasamos el valor y el palo.
+     */
     public Cartas(String Valor,String Palo){
         this.Palo=Palo;
         this.Valor=Valor;
