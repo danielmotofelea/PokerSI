@@ -15,7 +15,7 @@ public class Torneo {
      * @param participantes ArrayList que contiene a todos los participantes de un torneo.
      * @param idGen identificador de la generación actual de los jugadores.
      *
-     * El constructor solamente instancia un array de 8 finalistas y se guarda los valores que se le pasa por parámetro.
+     * El constructor solamente crea los arrayList necesarios y se guarda los valores que se le pasa por parámetro.
      */
     public Torneo(ArrayList<Jugador> participantes, int idGen) {
         finalistas =new ArrayList<Jugador>();
