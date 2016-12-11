@@ -81,7 +81,6 @@ public class Jugador {
         int contDoblePareja = 0;  /** Para tener doble pareja ---> contPareja1 = 1 y contPareja2 = 1*/
         int contTrio = 0;         /** Para tener trio ---> contTrio = 3 o contPareja1 = 3 o contPareja2 = 3*/
         int contCartaAlta = 0;    /** Por defecto*/
-        int contTriplePareja = 0; /** DIFICIL PERO NO IMPOSIBLE*/
         int contEscaleraColor = 0;
 
         int contPaloCorazones = 0;
@@ -146,9 +145,6 @@ public class Jugador {
                 contDoblePareja = 1;
                 valorPareja2 = j;
             }
-            if ((numeroCarta[j] == 2) && (numeroCarta[j] != numeroCarta[valorPareja1]) && (numeroCarta[j] != numeroCarta[valorPareja2]) && (contPareja1 == 1) && (contPareja2 == 1))
-                // Tendriamos triple pareja
-                contTriplePareja = 1;
 
             /**PARA TRIOS Y FULL*/
 
