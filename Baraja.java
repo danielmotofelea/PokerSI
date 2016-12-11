@@ -1,6 +1,7 @@
 package pokerSI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * Objeto baraja. En este momento solo se puede crear una baraja, cuyas cartas estan mezcladas y sacar el primer objeto de esa baraja.
