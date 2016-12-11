@@ -134,7 +134,7 @@ public class Jugador {
 
         for(int j=2;j<=14;j++) {
 
-            /** PARA PAREJAS, DOBLES PAREJAS O TRIPLES PAREJAS*/
+            /** PARA PAREJAS, DOBLES PAREJAS*/
 
             if ((numeroCarta[j] == 2) && (contPareja1 == 0)) { // Tenemos pareja
                 contPareja1 = 1;
