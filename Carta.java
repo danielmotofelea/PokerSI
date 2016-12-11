@@ -5,18 +5,18 @@ package pokerSI;
  */
 
 public class Carta {
-    private String valor;
-    private String palo;
+    private int valor;  // Valor en orden ascendente, siendo 2 la carta más baja y 14 la más alta (A)
+    private int palo;   // 1: Corazones     2: Picas     3: Diamantes       4:Treboles
 
     // Constructor sin parametros para facilitar las inicializaciones en la clase Jugador
     public Carta(){
-        this.palo = "";
-        this.valor = "";
+        this.palo = 0;
+        this.valor = 0;
     }
     /**
      *Constructor de la carta, le pasamos el valor y el palo.
      */
-    public Carta(String valor,String palo){
+    public Carta(int valor,int palo){
         this.palo=palo;
         this.valor=valor;
     }
@@ -31,11 +31,11 @@ public class Carta {
                 '}';
     }
 
-    public String getValor() {
+    public int getValor() {
         return valor;
     }
 
-    public String getPalo() {
+    public int getPalo() {
         return palo;
     }
     /**
