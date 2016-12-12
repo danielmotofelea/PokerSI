@@ -19,7 +19,7 @@ public class Torneo {
      * El constructor solamente crea los arrayList necesarios y se guarda los valores que se le pasa por parámetro.
      */
     public Torneo(ArrayList<Jugador> participantes, int idGen) {
-        this.finalistas =new ArrayList<Jugador>();
+        finalistas =new ArrayList<Jugador>();
         this.participantes=new ArrayList<Jugador>();
         this.participantes.addAll(participantes);
         this.idGen=idGen;
