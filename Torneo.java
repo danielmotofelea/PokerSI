@@ -41,10 +41,8 @@ public class Torneo {
         for (int i = 0; i < 8; i++) {
             jugadoresMesa.add(participantes.get(i));//Los 8 primeros jugadores del ArrayList son los finalistas de la generación anterior.
 
-            for(int j=0;j<7;j++) {
-                jugadoresMesa.add(participantes.get(posOtrosJug));
-                posOtrosJug++;
-            }
+            for(int j=0;j<7;j++)
+                jugadoresMesa.add(participantes.get(posOtrosJug++));
             m= new Mesa(jugadoresMesa, (i+1), idGen);//Constructor mesa: Mesa(Jugadores, idMesa, idGen); El id de la mesa va de 1 a 8
             finalistas.add(m.jugar());//El método jugar devuelve el ganador de la mesa.
         }
