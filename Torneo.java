@@ -45,7 +45,7 @@ public class Torneo {
                 jugadoresMesa.add(participantes.get(posOtrosJug));
                 posOtrosJug++;
             }
-            m= new Mesa(jugadoresMesa, i, idGen);//Constructor mesa: Mesa(Jugadores, idMesa, idGen);
+            m= new Mesa(jugadoresMesa, (i+1), idGen);//Constructor mesa: Mesa(Jugadores, idMesa, idGen);
             finalistas.add(m.jugar());//El método jugar devuelve el ganador de la mesa.
         }
         m=new Mesa(finalistas,idGen);//Constructor mesa: Mesa(Jugadores, idGen);
