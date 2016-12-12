@@ -1,6 +1,7 @@
 
+package pokerSI;
 import java.util.*;
-package PokerSI;
+
 
 /**
  * Created by Javi on 09/12/2016.
@@ -18,8 +19,8 @@ public class Torneo {
      * El constructor solamente crea los arrayList necesarios y se guarda los valores que se le pasa por parámetro.
      */
     public Torneo(ArrayList<Jugador> participantes, int idGen) {
-        finalistas =new ArrayList<Jugador>();
-        participantes=new ArrayList<Jugador>();
+        this.finalistas =new ArrayList<Jugador>();
+        this.participantes=new ArrayList<Jugador>();
         this.participantes.addAll(participantes);
         this.idGen=idGen;
     }
@@ -35,9 +36,11 @@ public class Torneo {
     public void realizarTorneo() {
         Mesa m;
         ArrayList<Jugador> jugadoresMesa = new ArrayList<Jugador>();
+        int posOtrosJug=8; //Guardara la posicion donde empezara a coger los jugadores no finalistas para la siguiente mesa
+
         for (int i = 0; i < 8; i++) {
-            int posOtrosJug=8;
             jugadoresMesa.add(participantes.get(i));//Los 8 primeros jugadores del ArrayList son los finalistas de la generación anterior.
+
             for(int j=0;j<7;j++) {
                 jugadoresMesa.add(participantes.get(posOtrosJug));
                 posOtrosJug++;
