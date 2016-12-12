@@ -1,13 +1,19 @@
 package pokerSI;
 import java.util.* ;
+
 public class Jugador {
 
-    protected int fichas, fichasGanadas, fichasApostadas, manosGanadas, manosJugadas;
+    protected int fichas;
+    protected int fichasGanadas;
+    protected int fichasApostadas;
+    protected int manosGanadas;
+    protected int manosJugadas;
    // protected float fitness;
     private int []identificacion;
     private Carta []cartasEnMano;
     private Carta []cartasComunes;
     private ArrayList<Carta> mejorMano;
+
     public Jugador(){       /** Constructor del Jugador*/
         this.fichas = 0;
         this.fichasGanadas = 0;
@@ -20,6 +26,7 @@ public class Jugador {
         this.cartasComunes = new Carta[5];             /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
         this.mejorMano = new ArrayList<Carta>();       /** La mejor combinacion de cartas sobre la mesa*/
     }
+
     public Jugador(int fichas, int fichasGanadas, int fichasApostadas, int manosGanadas,
                    int manosJugadas,/* float fitness,*/ int [] identificacion, String []cartasEnMano,
                    String []cartasComunes, ArrayList<Carta> mejorMano){
@@ -68,6 +75,7 @@ public class Jugador {
 
         return mejorMano;
     }
+
     public int  calcularMejorMano( ArrayList<Carta> manoProvisional){
 
         int numCartas = manoProvisional.size();
@@ -87,13 +95,13 @@ public class Jugador {
         int contPaloPicas = 0;
         int contPaloDiamantes = 0;
         int contPaloTreboles = 0;
-        int []numeroCarta = new int[15];
+        int []numeroCarta = new int[15];    //Hay 2 posiciones que nunca se usaran, se debe buscar una forma de optimizarlo
         int numeroDeLaCarta = 0;
         int valorPareja1 = 0;
         int valorPareja2 = 0;
         int valorActual = 0;
         int valorSiguiente = 0;
-        Boolean encontrado = false;
+        boolean escalera = false;
         int resul = 0;
 
 
@@ -104,7 +112,7 @@ public class Jugador {
                 return new Integer(c1.getValor()).compareTo(new Integer(c2.getValor()));
             }
         });
-        for(int i=0; i< numCartas; i++){
+        for(int i=0; i < numCartas; i++){
             if (manoProvisional.get(i).getPalo() == 1)       /** Esta forma lo que quiere expresar es que cojo todas las cartas que tenga a la vez*/
                 contPaloCorazones++;                         /** y los almacena para despues valorar que tipo de mano tenemos */
             if (manoProvisional.get(i).getPalo() == 2)
@@ -115,15 +123,17 @@ public class Jugador {
                 contPaloTreboles++;
             numeroDeLaCarta = manoProvisional.get(i).getValor();
             numeroCarta[numeroDeLaCarta] = numeroCarta[numeroDeLaCarta] + 1;
-            if(numCartas <=(i+1)) {
+
+            if((i+1) < numCartas)   //Se comprueba si hay mas cartas en la mano, en cuyo caso se pasa a comprobar si puede haber escalera o no
+            {
                 valorActual = manoProvisional.get(i).getValor();
                 valorSiguiente = manoProvisional.get(i+1).getValor();
                 if((valorActual+1 == valorSiguiente)) {
                     contEscalera++;
                     if(contEscalera == 5)
-                        encontrado = true;
+                        escalera = true;
                 }
-                else if(!encontrado)
+                else if(!escalera)
                     contEscalera = 0;
 
             }
@@ -132,7 +142,7 @@ public class Jugador {
 
         // Para ver si tenemos pareja
 
-        for(int j=2;j<=14;j++) {
+        for(int j=2; j<=14; j++) {
 
             /** PARA PAREJAS, DOBLES PAREJAS*/
 
@@ -163,16 +173,16 @@ public class Jugador {
 
         /** PARA COLOR */
 
-        if ((contPaloCorazones >=4) || (contPaloDiamantes >=4) || (contPaloPicas >=4) || (contPaloTreboles >=4))
+        if ((contPaloCorazones >4) || (contPaloDiamantes >4) || (contPaloPicas >4) || (contPaloTreboles >4))
             contColor = 1;
 
         /** PARA ESCALERA */
-        if(encontrado) // Tenemos escalera
+        if(escalera) // Tenemos escalera
             contEscalera = 1;
 
         /** Ahora para ver si tenemos escalera de color*/
 
-        if (encontrado && (contColor == 1))
+        if (escalera && (contColor == 1))
             contEscaleraColor = 1;
 
         /** Ahora habra que devolver la mejor mano */
