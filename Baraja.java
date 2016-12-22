@@ -9,7 +9,7 @@ import java.util.Iterator;
 public class Baraja {
 
     /** Esta es la estrucutra de datos que se ha utilizado para almacenar las cartas que forman la baraja **/
-    ArrayList<Carta> b =new ArrayList<Carta>();
+     private ArrayList<Carta> b =new ArrayList<Carta>();
 
     /** Constructor. Llena la baraja de cartas y luego las mezcla con el metodo shuffle.
      * Tengo pensado hacer el constructor mas limpio, para no crear los objetos uno a un
@@ -45,8 +45,7 @@ public class Baraja {
     }
 
     /**
-     * Este metodo devuelve un objeto de tipo cartsd que se corresponde a la primera que hay en la baraja. Antes de devolverla la borra
-     * Todavia hay que considerar casos de erros, asi que hay que tener cuidado con el contenido de la baraja antes de usar este metodo
+     * Este metodo devuelve un objeto de tipo carta que se corresponde a la primera que hay en la baraja. Antes de devolverla la borra
      */
 
     public Carta sacarPrimeraCarta(){
@@ -55,8 +54,12 @@ public class Baraja {
         return cartaRet;
     }
     /**
-     *Ire aniadiendo mas metodos segun se vayan necesitando
+     * El siguiente método sirve en caso de necesitar el tamaño de la baraja. Usado inicialmente para pruebas
      */
+    public int cartasRestantes()
+    {
+        return b.size();
+    }
 
 
 
