@@ -52,7 +52,7 @@ public class Jugador {
     }
 
     /** Al tratarse de atributos privados se necesitan metodos para acceder a las variables
-     *  se ha decidido que sean private para asi tener un acceso controlado a los atirbutos
+     *  se ha decidido que sean private para asi tener un acceso controlado a los atributos
      *  que no pertenezcan a la misma clase */
 
     public int getFichas() {
