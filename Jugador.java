@@ -6,11 +6,11 @@ import net.sourceforge.jFuzzyLogic.membership.MembershipFunction;
 import net.sourceforge.jFuzzyLogic.membership.MembershipFunctionGaussian;
 import net.sourceforge.jFuzzyLogic.membership.MembershipFunctionSingleton;
 import net.sourceforge.jFuzzyLogic.membership.Value;
-import net.sourceforge.jFuzzyLogic.rule.LinguisticTerm;
-import net.sourceforge.jFuzzyLogic.rule.RuleBlock;
-import net.sourceforge.jFuzzyLogic.rule.Variable;
+import net.sourceforge.jFuzzyLogic.rule.*;
 import net.sourceforge.jFuzzyLogic.ruleAccumulationMethod.RuleAccumulationMethodMax;
 import net.sourceforge.jFuzzyLogic.ruleActivationMethod.RuleActivationMethodMin;
+import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodAndMin;
+import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodOrMax;
 
 import java.util.* ;
 public class Jugador {
@@ -22,8 +22,7 @@ public class Jugador {
     private int fichasApostadas;
     private int manosGanadas;
     private int manosJugadas;
-    private int []gen; /* debera incluir en alguna de sus posiciones el valor de "agresividad"
-                         que indicara el porcentaje de subida respecto a la apuesta minima, cuando corresponda */
+    private double []gen; /* Posiciones 0 a 8: pesos de reglas, posicion 9: agresividad */
     private float fitness;
     private int []identificacion;
     private Carta []cartasEnMano;
@@ -37,21 +36,11 @@ public class Jugador {
         this.manosGanadas = 0;
         this.manosJugadas = 0;
         this.fitness = 0;
-        this.gen = new int[8];
+        this.gen = new double[10];                        /** Tamaño 10 por ser 9 pesos de reglas + valor de agresividad*/
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
         this.cartasEnMano = new Carta[2] ;             /** Las dos cartas en mano las tomamos como enteros*/
         this.cartasComunes = new Carta[5];             /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
         this.mejorMano = new ArrayList<Carta>();       /** La mejor combinacion de cartas sobre la mesa*/
-    }
-
-    public Jugador(int []gen){ /** Contructor del pokerSI.Jugador con parametros */
-
-        this.fichas = fichas;
-        this.fichasGanadas = fichasGanadas;
-        this.fichasApostadas = fichasApostadas;
-        this.manosGanadas = manosGanadas;
-        this.manosJugadas = manosJugadas;
-        this.fitness = fitness;
 
         for(int i=0; i<3; i++)
             this.identificacion[i] = 0;
@@ -59,10 +48,11 @@ public class Jugador {
             this.cartasEnMano[j] = new Carta();
         for(int k=0; k<5; k++)
             this.cartasComunes[k] = new Carta();
-        for(int v=0; v<8; v++)
-            this.gen[v] = 0;
+        for(int v=0; v<10; v++)
+            this.gen[v] = 0.0;
         this.mejorMano = new ArrayList<Carta>();
     }
+
 
     /** Al tratarse de atributos privados se necesitan metodos para acceder a las variables
      *  se ha decidido que sean private para asi tener un acceso controlado a los atributos
@@ -108,11 +98,11 @@ public class Jugador {
         this.manosJugadas = manosJugadas;
     }
 
-    public int[] getGen() {
+    public double[] getGen() {
         return gen;
     }
 
-    public void setGen(int[] gen) {
+    public void setGen(double[] gen) {
         this.gen = gen;
     }
 
@@ -138,7 +128,7 @@ public class Jugador {
     public void resetAtributosJugador(){
         this.fichas = 1000;
         this.fichasGanadas = 0;
-        this.fichasApostadas = 0;   // guargamos el fitness de los jugadores de una generacion a otra
+        this.fichasApostadas = 0;   // guardamos el fitness de los jugadores de una generacion a otra
         this.manosGanadas = 0;
         this.manosJugadas = 0;
         this.fitness = 0;
@@ -337,6 +327,11 @@ public class Jugador {
         /** Una buena opcion es crear un arraylist y añadir las cartas actuales y mandarlo al borroso para
          ver que podemos hacer con la mejor mano que tenemos*/
 
+
+        /*
+            COMIENZO CONTROLADOR BORROSO
+         */
+
         FIS fis = new FIS();
         FunctionBlock fb = new FunctionBlock(fis);
         fis.addFunctionBlock("Decision", fb);
@@ -366,7 +361,7 @@ public class Jugador {
 
         /*
             Valores de medias y desviaciones tipicas se calculan en mesa cada vez que se elimina un jugador. A la espera
-            de ver la implementacion asignar los nombres de parametros correctos
+            de ver la implementacion para asignar los nombres de parametros correctos
          */
         MembershipFunction mPocas = new MembershipFunctionGaussian(new Value(mediaPocas), new Value(desvPocas));
         MembershipFunction mMedias = new MembershipFunctionGaussian(new Value(mediaMedias), new Value(desvMedias));
@@ -442,8 +437,8 @@ public class Jugador {
         MembershipFunction mSubir = new MembershipFunctionGaussian(new Value(), new Value());
 
         LinguisticTerm ltpasarNI = new LinguisticTerm("pasar/noIr", mPasarNI);
-        LinguisticTerm ltIgualar = new LinguisticTerm("mala", mIgualar);
-        LinguisticTerm ltSubir = new LinguisticTerm("buena", mSubir);
+        LinguisticTerm ltIgualar = new LinguisticTerm("igualar", mIgualar);
+        LinguisticTerm ltSubir = new LinguisticTerm("subir", mSubir);
 
         decision.add(ltpasarNI);
         decision.add(ltIgualar);
@@ -451,9 +446,17 @@ public class Jugador {
 
         /**
          * Bloque de reglas
-         * Como metodo de acumulacion se usara el MAX, y como activacion el MIN,
-         * ya que están en los ejemplos tanto de clase como de los tutoriales oficiales,
-         * habrá que investigar si usar otro método podría funcionarnos mejor.
+         *
+         * Se han omitido declaraciones repetidas de términos, a pesar de que en los ejemplos
+         * si se mantenían repetidas. En las pruebas se comprobará si la omisión es correcta o no, por si acaso
+         * está la implementación literal comentada en cada regla.
+         *
+         * En caso de que lo anterior funcione, quizá se podría probar a omitir también algunas RuleExpression,
+         * que también se repiten aunque con menor frecuencia. Esto también podría dificultar la lectura del código
+         * por lo que queda descartado por el momento.
+         *
+         * También se podría probar a declarar cada tipo de decision como RuleTerm y no pasarlo "a pelo" cada vez que
+         * se hace un addConsequent, pero igualmente podría dificultar la lectura del código.
          */
 
         RuleBlock ruleBlock = new RuleBlock(fb);
@@ -461,15 +464,121 @@ public class Jugador {
         ruleBlock.setRuleAccumulationMethod(new RuleAccumulationMethodMax());
         ruleBlock.setRuleActivationMethod(new RuleActivationMethodMin());
 
-        // RULE 1 : IF mano IS muyMala THEN decision IS pasar/noIr
-        // RULE 2 : IF mano IS muyBuena THEN decision IS subir
-        // RULE 3 : IF fase IS preflop AND (mano IS mala AND fichas IS pocas) THEN decision IS pasar/noIr
-        // RULE 4 : IF fase IS preflop AND (mano IS mala AND (fichas IS medias OR fichas IS muchas)) THEN decision IS igualar
-        // RULE 5 : IF fase IS preflop AND (mano IS buena AND fichas IS pocas) THEN decision IS igualar
-        // RULE 6 : IF fase IS preflop AND (mano IS buena AND (fichas IS medias OR fichas IS muchas)) THEN decision IS igualar
-        // RULE 7 : IF fase IS flop AND (mano IS mala AND (fichas IS pocas OR fichas IS medias)) THEN decision IS pasar/noIr
-        // RULE 8 : IF fase IS flop AND (mano IS mala AND fichas IS muchas) THEN decision IS igualar
-        // RULE 9 : IF fase IS turn/river AND mano IS mala THEN pasar/noIr
+        /*
+         RULE 1 : IF mano IS muyMala THEN decision IS pasar/noIr
+          */
+
+        Rule rule1 = new Rule("Regla1", ruleBlock);
+        RuleTerm t1r1 = new RuleTerm(mano, "muyMala", false);
+        rule1.addConsequent(decision, "pasar/noIr", false);
+        ruleBlock.add(rule1);
+
+        /*
+         RULE 2 : IF mano IS muyBuena THEN decision IS subir
+          */
+
+        Rule rule2 = new Rule("Regla2", ruleBlock);
+        RuleTerm t1r2 = new RuleTerm(mano, "muyBuena", false);
+        rule2.addConsequent(decision, "subir", false);
+        ruleBlock.add(rule2);
+
+        /*
+         RULE 3 : IF (fase IS preflop AND mano IS mala) AND fichas IS pocas THEN decision IS pasar/noIr
+          */
+
+        Rule rule3 = new Rule("Regla3", ruleBlock);
+        RuleTerm rtFasePreflop = new RuleTerm(fase, "preflop", false);
+        RuleTerm rtManoMala = new RuleTerm(mano, "mala", false);
+        RuleTerm rtFichasPocas = new RuleTerm(fichas, "pocas", false);
+        RuleExpression r3AntecedenteAnd1 = new RuleExpression(rtFasePreflop, rtManoMala, RuleConnectionMethodAndMin.get());
+        RuleExpression r3AntecedenteAnd2 = new RuleExpression(r3AntecedenteAnd1, rtFichasPocas, RuleConnectionMethodAndMin.get());
+        rule3.setAntecedents(r3AntecedenteAnd2);
+        rule3.addConsequent(decision, "pasar/noIr", false);
+        ruleBlock.add(rule3);
+
+        /*
+         RULE 4 : IF (fase IS preflop AND mano IS mala) AND (fichas IS medias OR fichas IS muchas) THEN decision IS igualar
+          */
+
+        Rule rule4 = new Rule("Regla4", ruleBlock);
+        //RuleTerm t1r4 = new RuleTerm(fase, "preflop", false); En el ejemplo se declaran repetidas, pero a lo mejor no hace falta
+        //RuleTerm t2r4 = new RuleTerm(mano, "mala", false);
+        RuleTerm rtFichasMedias = new RuleTerm(fichas, "medias", false);
+        RuleTerm rtFichasMuchas = new RuleTerm(fichas, "muchas", false);
+        RuleExpression r4AntecedenteAnd1 = new RuleExpression(rtFasePreflop, rtManoMala, RuleConnectionMethodAndMin.get());
+        RuleExpression r4AntecedenteOr1 = new RuleExpression(rtFichasMedias, rtFichasMuchas, RuleConnectionMethodOrMax.get());
+        RuleExpression r4AntecedenteAnd2 = new RuleExpression(r4AntecedenteAnd1, r4AntecedenteOr1, RuleConnectionMethodAndMin.get());
+        rule4.setAntecedents(r4AntecedenteAnd2);
+        rule4.addConsequent(decision, "igualar", false);
+        ruleBlock.add(rule4);
+
+        /*
+         RULE 5 : IF (fase IS preflop AND mano IS buena) AND fichas IS pocas THEN decision IS igualar
+          */
+
+        Rule rule5 = new Rule("Regla5", ruleBlock);
+        //RuleTerm t1r5 = new RuleTerm(fase, "preflop", false);  En el ejemplo se declaran repetidas, pero a lo mejor no hace falta
+        RuleTerm rtManoBuena = new RuleTerm(mano, "buena", false);
+        //RuleTerm t3r5 = new RuleTerm(fichas, "pocas", false);
+        RuleExpression r5AntecedenteAnd1 = new RuleExpression(rtFasePreflop, rtManoBuena, RuleConnectionMethodAndMin.get());
+        RuleExpression r5AntecedenteAnd2 = new RuleExpression(r5AntecedenteAnd1, rtFichasPocas, RuleConnectionMethodAndMin.get());
+        rule5.setAntecedents(r5AntecedenteAnd2);
+        rule5.addConsequent(decision, "igualar", false);
+        ruleBlock.add(rule5);
+
+        /*
+         RULE 6 : IF (fase IS preflop AND mano IS buena) AND (fichas IS medias OR fichas IS muchas) THEN decision IS subir
+          */
+
+        Rule rule6 = new Rule("Regla6", ruleBlock);
+        //RuleTerm t1r6 = new RuleTerm(fase, "preflop", false);  En el ejemplo se declaran repetidas, pero a lo mejor no hace falta
+        //RuleTerm t2r6 = new RuleTerm(mano, "buena", false);
+        //RuleTerm t3r6 = new RuleTerm(fichas, "medias", false);
+        //RuleTerm t4r6 = new RuleTerm(fichas, "muchas", false);
+        RuleExpression r6AntecedenteAnd1 = new RuleExpression(rtFasePreflop, rtManoBuena, RuleConnectionMethodAndMin.get());
+        RuleExpression r6AntecedenteOr1 = new RuleExpression(rtFichasMedias, rtFichasMuchas, RuleConnectionMethodOrMax.get());
+        RuleExpression r6AntecedenteAnd2 = new RuleExpression(r6AntecedenteAnd1, r6AntecedenteOr1, RuleConnectionMethodAndMin.get());
+        rule6.setAntecedents(r6AntecedenteAnd2);
+        rule6.addConsequent(decision, "subir", false);
+        ruleBlock.add(rule6);
+
+        /*
+         RULE 7 : IF (fase IS flop AND mano IS mala) AND (fichas IS pocas OR fichas IS medias) THEN decision IS pasar/noIr
+          */
+
+        Rule rule7 = new Rule("Regla7", ruleBlock);
+        RuleTerm rtFaseFlop = new RuleTerm(fase, "flop", false);
+        //RuleTerm t2r7 = new RuleTerm(mano, "mala", false);
+        //RuleTerm t3r7 = new RuleTerm(fichas, "pocas", false);
+        //RuleTerm t4r7 = new RuleTerm(fichas, "medias", false);
+        RuleExpression r7AntecedenteAnd1 = new RuleExpression(rtFaseFlop, rtManoMala, RuleConnectionMethodAndMin.get());
+        RuleExpression r7AntecedenteOr1 = new RuleExpression(rtFichasPocas, rtFichasMedias, RuleConnectionMethodOrMax.get());
+        RuleExpression r7AntecedenteAnd2 = new RuleExpression(r7AntecedenteAnd1, r7AntecedenteOr1, RuleConnectionMethodAndMin.get());
+        rule7.setAntecedents(r7AntecedenteAnd2);
+        rule7.addConsequent(decision, "pasar/noIr", false);
+        ruleBlock.add(rule7);
+
+        /*
+         RULE 8 : IF (fase IS flop AND mano IS mala) AND fichas IS muchas THEN decision IS igualar
+          */
+
+        Rule rule8 = new Rule("Regla8", ruleBlock);
+        RuleExpression r8AntecedenteAnd1 = new RuleExpression(rtFaseFlop, rtManoMala, RuleConnectionMethodAndMin.get());
+        RuleExpression r8AntecedenteAnd2 = new RuleExpression(r8AntecedenteAnd1, rtFichasMuchas, RuleConnectionMethodAndMin.get());
+        rule8.setAntecedents(r8AntecedenteAnd2);
+        rule8.addConsequent(decision, "igualar", false);
+        ruleBlock.add(rule8);
+
+        /*
+         RULE 9 : IF fase IS turn/river AND mano IS mala THEN pasar/noIr
+          */
+        Rule rule9 = new Rule("Regla9", ruleBlock);
+        RuleTerm rtFaseTR = new RuleTerm(fase, "turn/river", false);
+        RuleExpression r9AntecedenteAnd1 = new RuleExpression(rtFaseTR, rtManoMala, RuleConnectionMethodAndMin.get());
+        rule9.setAntecedents(r9AntecedenteAnd1);
+        rule9.addConsequent(decision, "pasar/noIr", false);
+        ruleBlock.add(rule9);
+
         /** RULE 10: IF fase IS turn/river AND (mano IS buena AND fichas IS pocas) THEN Igualar || SUBIR
         * Inicialmente, se habia contemplado que los posibles valores de decision eran No ir, Pasar y Apostar (igualar y subir).
          * Realmente, los que se comportan de la misma forma son No ir y Pasar, ya que contemplamos que intentara pasar y,
@@ -478,5 +587,47 @@ public class Jugador {
          * Por ello, esta útlima regla no se podra implementar, deberá aprender el jugador por sí solo lo que debe hacer
          */
 
+
+        /*
+         * Los pesos se obtienen de las 9 primeras posiciones de gen
+         */
+        rule1.setWeight(gen[0]);
+        rule2.setWeight(gen[1]);
+        rule3.setWeight(gen[2]);
+        rule4.setWeight(gen[3]);
+        rule5.setWeight(gen[4]);
+        rule6.setWeight(gen[5]);
+        rule7.setWeight(gen[6]);
+        rule8.setWeight(gen[7]);
+        rule9.setWeight(gen[8]);
+        /*
+            END_RULEBLOCK
+         */
+        pruebaBorroso(fis); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
+
+        /**
+         * TODO especificar donde se van a guardar los valores de grado de soporte y peso de las reglas, etc
+         */
+        /**
+         * TODO especificar valores de entrada al borroso, previos al evaluate
+         */
+
+        fis.evaluate();
+
+        /**
+         * TODO especificar cada cuantas generaciones (atributo numGeneracion de Main) hay que guardar en fichero el output del fis
+         */
+    }
+
+    /**
+     * La única finalidad de la función pruebaBorroso es comprobar que las reglas y las variables han quedado bien
+     * definidas.
+     * @param fis
+     */
+    public void pruebaBorroso(FIS fis)
+    {
+        /**
+         * TODO definir prueba del borroso
+         */
     }
 }
