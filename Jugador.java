@@ -22,11 +22,13 @@ public class Jugador {
     private int fichasApostadas;
     private int manosGanadas;
     private int manosJugadas;
-    private double []gen; /* Posiciones 0 a 8: pesos de reglas, posicion 9: agresividad */
+    private double []gen; /** Posiciones 0 a 8: pesos de reglas, posicion 9: agresividad */
+
+    private int valorMano;
     private float fitness;
     private int []identificacion;
     private Carta []cartasEnMano;
-    private Carta []cartasComunes;
+    private ArrayList<Carta> cartasComunes;
     private ArrayList<Carta> mejorMano;
 
     public Jugador(){       /** Constructor del pokerSI.Jugador sin parametros */
@@ -36,23 +38,23 @@ public class Jugador {
         this.manosGanadas = 0;
         this.manosJugadas = 0;
         this.fitness = 0;
-        this.gen = new double[10];                        /** Tamaño 10 por ser 9 pesos de reglas + valor de agresividad*/
+        this.valorMano = 1;
+        this.gen = new double[10];                     /** Tamaño 10 por ser 9 pesos de reglas + valor de agresividad*/
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
         this.cartasEnMano = new Carta[2] ;             /** Las dos cartas en mano las tomamos como enteros*/
-        this.cartasComunes = new Carta[5];             /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
+        this.cartasComunes = new ArrayList<Carta>();   /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
         this.mejorMano = new ArrayList<Carta>();       /** La mejor combinacion de cartas sobre la mesa*/
 
         for(int i=0; i<3; i++)
             this.identificacion[i] = 0;
-        for(int j=0; j<2; j++)
+        for(int j=0; j<3; j++)
             this.cartasEnMano[j] = new Carta();
-        for(int k=0; k<5; k++)
-            this.cartasComunes[k] = new Carta();
-        for(int v=0; v<10; v++)
-            this.gen[v] = 0.0;
+        for(int k=0; k<10; k++)
+            this.gen[k] = 0.0;
+
+        this.cartasComunes = new ArrayList<Carta>();
         this.mejorMano = new ArrayList<Carta>();
     }
-
 
     /** Al tratarse de atributos privados se necesitan metodos para acceder a las variables
      *  se ha decidido que sean private para asi tener un acceso controlado a los atributos
@@ -149,13 +151,31 @@ public class Jugador {
 
     public ArrayList<Carta> verMejorMano(){
 
+        int k;
+        int posMejorCarta1 = 0;         /** Estos dos valores son para indicar la posicion de la mejor carta en cada caso*/
+        int posMejorCarta2 = 0;         /** El segundo valor solo se utilizara en caso de doble pareja o full
+                                        tambien podria usarse para indicar la carta mas alta y mas baja de una escalera*/
+        int []numCarta = new int[13];
+
         ArrayList<Carta> manoProvisional = new ArrayList<Carta>();    /** Array creado para añadir las 7 cartas al borroso y que devuelva la mejor mano*/
         for(int i=0; i<2; i++)
             manoProvisional.add(cartasEnMano[i]);        /** Se añaden las cartas que se tenga actualmente en un arraylist unificado*/
-        for(int j=0; j<5; j++)                           /** Para pasarselo a otro metodo y que evalue la mejor mano*/
-            manoProvisional.add(cartasComunes[j]);
+        for(int j=0; j<cartasComunes.size(); j++)                           /** Para pasarselo a otro metodo y que evalue la mejor mano*/
+            manoProvisional.add(cartasComunes.get(j));
 
-        int valorMejorMano = calcularMejorMano(manoProvisional);
+       /** switch (calcularMejorMano(manoProvisional)){
+            case 1:
+                for(k=0; k< manoProvisional.size(); k++){
+                    if(manoProvisional.get(k).getValor()> posMejorCarta1)
+                        posMejorCarta1 = manoProvisional.get(k).getValor();
+                }
+                mejorMano.add(manoProvisional.get(posMejorCarta1));
+            case 2:
+                for(k=0; k< manoProvisional.size(); k++){
+                    numCarta[manoProvisional.get(k).getValor()-2] = numCarta[manoProvisional.get(k).getValor()-2] + 1;
+                }
+        }*/
+
 
         /** Ya tenemos el valor de nuestra mejor mano pero para apostar debemos hacer una consulta al sistema borroso
          *  y tomar una decision, de si apostar, pasar o irse, todo esto dependiendo de los jugadores que haya aun en la mesa
@@ -163,6 +183,12 @@ public class Jugador {
 
         return mejorMano;
     }
+
+    /** Creo que seria bueno que devuelva dos valores:
+     *
+     *                   1 que sea el tipo de mano(sin especificar),
+     *                   2 que sea la ponderacion(llamando al metodo de ponderacion)*/
+
     public int  calcularMejorMano( ArrayList<Carta> manoProvisional){
 
         int numCartas = manoProvisional.size();
@@ -178,17 +204,39 @@ public class Jugador {
         boolean escaleraColor = false;/** Para tener escalera de color ---> escalera = true y color = true */
         boolean escalera = false;     /** Para tener escalera tenemos que tener 5 cartas consecutivas*/
 
+        boolean cor = false;          /** Hemos creado estas variables para tener en cuenta que tipo de mano tenemos para asi facilitar la ponderacion */
+        boolean pic = false;
+        boolean treb = false;
+        boolean diam = false;
+        boolean escDia = false;
+        boolean escCor = false;
+        boolean escPic = false;
+        boolean escTreb = false;
+
         int contCorazones = 0;        /** Son los contadores para tener el recuento de las veces que se repite un determinado palo*/
         int contPicas = 0;
         int contDiamantes = 0;
         int contTreboles = 0;
         int []numeroCarta = new int[13]; /** Array que cuenta las veces que se repiten las cartas por su valor pero, valor carta = posicion + 2*/
         int numeroDeLaCarta;
-        int valorPareja1 = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
+
+        int valorPareja1 = 0;
+        int valorPareja2 = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
         int valorActual;                 /** Estos contadores tienen la funcionalidad de guardar los valores para ayudar al recuento de la escalera*/
         int valorSiguiente;
+        int []valorFull = new int[2];
+        int valorTrio = 0;
+        int valorEscaleraInicio = 0;
+        int valorEscaleraFinal = 0;
+        int valorColor = 0;
+        int valorPoker = 0;
 
-        int resul = 0;                   /** Valor por defecto, dado que si no tenemos ninguna de las manos anteriores, tendremos carta alta*/
+        // int resul = 1;            /** Valor por defecto, dado que si no tenemos ninguna de las manos anteriores, tendremos carta alta*/
+
+        for(int i=0; i<13; i++)
+            numeroCarta[i] = 0;
+        for(int j=0; j<2; j++)
+            valorFull[j] = 0;
 
         /** OBSERVACION: En el caso del jugador nos da igual cual sea el valor de las cartas, es decir, en esta implementacion
          *               lo unico que nos interesa es que tipo de mano tenemos, trio, full, etc. Nos da igual el valor de dicha manos,
@@ -205,15 +253,26 @@ public class Jugador {
 
         for(int i=0; i < numCartas; i++){
 
-            if (manoProvisional.get(i).getPalo() == 1)       /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
-                contCorazones++;                             /** Despues aumentamos el contador de dicho palo para llevar el recuento */
-            if (manoProvisional.get(i).getPalo() == 2)
+            if (cartasComunes.get(i).getPalo() == 1) {    /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
+                contCorazones++;                          /** Despues aumentamos el contador de dicho palo para llevar el recuento */
+                if(contCorazones > 4)
+                    valorColor = cartasComunes.get(i).getValor();      /** Guarda el valor mas alto del color */
+            }
+            if (cartasComunes.get(i).getPalo() == 2){
                 contPicas++;
-            if (manoProvisional.get(i).getPalo() == 3)
+                if(contPicas > 4)
+                    valorColor = cartasComunes.get(i).getValor();
+            }
+            if (cartasComunes.get(i).getPalo() == 3) {
                 contDiamantes++;
-            if (manoProvisional.get(i).getPalo() == 4)
+                if(contDiamantes > 4)
+                    valorColor = cartasComunes.get(i).getValor();
+            }
+            if (cartasComunes.get(i).getPalo() == 4){
                 contTreboles++;
-
+                if(contTreboles > 4)
+                    valorColor = cartasComunes.get(i).getValor();
+            }
             numeroDeLaCarta = manoProvisional.get(i).getValor();    /** Guardamos el valor de carta en la posicion valor - 2 (para ahorrar espacio) */
             numeroCarta[numeroDeLaCarta - 2] = numeroCarta[numeroDeLaCarta - 2] + 1;
 
@@ -224,8 +283,11 @@ public class Jugador {
 
                 if(valorActual+1 == valorSiguiente) {
                     contEscalera++;
-                    if(contEscalera == 5)
+                    if(contEscalera == 5) {
                         escalera = true;
+                        valorEscaleraFinal = valorSiguiente;
+                        valorEscaleraInicio = valorSiguiente - 5;
+                    }
                 }
                 else if(!escalera)
                     contEscalera = 0;
@@ -236,8 +298,11 @@ public class Jugador {
 
             if((manoProvisional.get(i).getValor() == 14) && (manoProvisional.get(0).getValor() == 2) &&
                     (manoProvisional.get(1).getValor() == 3) && (manoProvisional.get(2).getValor() == 4) &&
-                    (manoProvisional.get(3).getValor() == 5))
+                    (manoProvisional.get(3).getValor() == 5)) {
                 escalera = true;
+                valorEscaleraInicio = 14;
+                valorEscaleraFinal = 5;
+            }
         }
 
         /** Ahora vamos a ver si tenemos color, trio, pareja, doble pareja, full o poker*/
@@ -248,39 +313,73 @@ public class Jugador {
 
             if ((numeroCarta[j] == 2) && (pareja1 == false)) { // Tenemos pareja
                 pareja1 = true;
-                valorPareja1 = j;
+                valorPareja1 = j + 2;
             }
             if ((numeroCarta[j] == 2) && (numeroCarta[j] != numeroCarta[valorPareja1]) && (pareja2 == false)) { // En este caso tenemos doble pareja
                 pareja2 = true;
                 doblePareja = true;
+                valorPareja2 = j + 2;
             }
 
             /**PARA TRIOS Y FULL*/
 
             if (numeroCarta[j] == 3) {
                 if ((pareja1 == true) || (pareja2 == true)) // Si tenemos un contador con 3 y otro con 2, entonces tenemos Full
+
                     full = true;
-                else
+                if (pareja1 == true) {
+                    valorFull[0] = valorPareja1;
+                    valorFull[1] = j + 2;
+                } else {
                     trio = true;
+                    valorTrio = j + 2;
+                }
             }
             /** PARA POKER */
 
-            if (numeroCarta[j] == 4) // Tenemos poker
+            if (numeroCarta[j] == 4) { // Tenemos poker
                 poker = true;
+                valorPoker = j + 2;
+            }
         }
 
         /** PARA COLOR */
 
-        if ((contCorazones >4) || (contDiamantes >4) || (contPicas >4) || (contTreboles >4))
+        if ((contCorazones >4) || (contDiamantes >4) || (contPicas >4) || (contTreboles >4)) {
             color = true;
+            if(contCorazones > 4)
+                cor = true;
+
+                else if(contDiamantes > 4)
+                    diam = true;
+
+                    else if(contTreboles > 4)
+                        treb = true;
+
+                        else if(contPicas > 4)
+                            pic = true;
+        }
 
         /** OBSERVACION: Para escalera no hace falta valorar dado que si anteriormente escalera = true
          *               ya sabemos que tenemos escalera. */
 
         /** Para ver si tenemos escalera de color */
 
-        if (escalera && color)
+        if (escalera && color){
             escaleraColor = true;
+            if(cor)
+                escCor = true;
+
+                else if(treb)
+                    escTreb = true;
+
+                    else if(diam)
+                        escDia = true;
+
+                        else if(pic)
+                            escPic = true;
+        }
+
 
         /** Ahora habra que devolver la mejor mano */
 
@@ -292,46 +391,1550 @@ public class Jugador {
                             if(trio == false){
                                 if(doblePareja == false){
                                     if((pareja1 == false) &&(pareja2 == false)){
-                                        resul = 1;
+                                        valorMano = 1;
                                     }else
-                                        resul = 2; // Tenemos Pareja
+                                        valorMano = 2; // Tenemos Pareja
                                 }else
-                                    resul = 3; // Tenemos Doble Pareja
+                                    valorMano = 3; // Tenemos Doble Pareja
                             }else
-                                resul = 4; // Tenemos trio
+                                valorMano = 4; // Tenemos trio
                         }else
-                            resul = 5; // Tenemos Escalera
+                            valorMano = 5; // Tenemos Escalera
                     }else
-                        resul = 6; // Tenemos Color
+                        valorMano = 6; // Tenemos Color
                 }else
-                    resul = 7; // Tenemos Full
+                    valorMano = 7; // Tenemos Full
             }else
-                resul = 8; // Tenemos Poker
+                valorMano = 8; // Tenemos Poker
         }else
-            resul = 9; // Tenemos Escalera de color
+            valorMano = 9; // Tenemos Escalera de color
 
-        /** RESUL = 1 ---> CARTA ALTA
-         *          2 ---> PAREJA
-         *          3 ---> DOBLE PAREJA
-         *          4 ---> TRIO
-         *          5 ---> ESCALERA
-         *          6 ---> COLOR
-         *          7 ---> FULL
-         *          8 ---> POKER
-         *          9 ---> ESCALERA DE COLOR                   */
+        /** valorMano = 1 ---> CARTA ALTA
+         *              2 ---> PAREJA
+         *              3 ---> DOBLE PAREJA
+         *              4 ---> TRIO
+         *              5 ---> ESCALERA
+         *              6 ---> COLOR
+         *              7 ---> FULL
+         *              8 ---> POKER
+         *              9 ---> ESCALERA DE COLOR                   */
 
-        return resul;
+        float ponderacion = ponderarMano(valorMano, escPic, escCor, escDia, escTreb, cor, pic, treb, diam, valorPareja1, valorPareja2,
+                valorPoker, valorTrio, valorFull,valorColor, valorEscaleraInicio, valorEscaleraFinal);
+
+        return valorMano;
+    }
+
+    /** Metodo creado para ponderar las mano mano que tenemos nosotros con la mejor de la mesa, es decir,
+     * comparamos el valor que nos devuelve el metodo anterior (calcularMejorMano)
+     *
+     * NOTA: No sería mejor tener un atributo que guarde el valor de la mejor mano para no tener que volver a llamar al metodo
+     *       y asi evitar calcular de nuevo la mejor mano. (añadido, si no, resulta util buscar otra forma)*/
+
+
+    public float ponderarMano(int valorMano, boolean escPic, boolean escCor, boolean escDia,boolean escTreb,
+                            boolean cor, boolean pic, boolean treb, boolean diam, int valorPareja1, int valorPareja2,
+                            int valorPoker, int valorTrio, int []valorFull,int valorColor, int valorEscaleraInicio, int valorEscaleraFinal){
+
+        int ponderacion = 0;
+
+        /** En el metodo recibimos la mejor combinacion que tenemos respecto de todas las cartas
+         *
+         * PONDERACION = ((valorCartasEnMano*tipoDeMano)*(valorCartasMejorMano*tipoMejorMano))/(valorMejorCartasMesa*tipoMejorManoMesa)
+         *
+         * NOTA: LA ECUACION ANTERIOR TIENE UN PROBLEMA, CUANDO NO HAY CARTAS EN MESA, POR LO TANTO HAY QUE TRATAR ESE CASO DE MANERA ESPECIAL*/
+
+        /**Para cartas en mano*/
+
+        int parMano = 0; // valor pareja en mano
+        int carAlta = 0; // valor carta alta en mano
+
+        /**Para cartas comunes*/
+
+        int valorManoComun = 1;
+
+        int contEscaleraComun = 0;
+        boolean colorComun = false;
+        boolean pokerComun = false;
+        boolean fullComun = false;
+        boolean pareja1Comun = false;
+        boolean pareja2Comun = false;
+        boolean dobleParejaComun = false;
+        boolean trioComun = false;
+        boolean escaleraColorComun = false;
+        boolean escaleraComun = false;
+
+        boolean corComun = false;
+        boolean picComun = false;
+        boolean trebComun = false;
+        boolean diamComun = false;
+        boolean escDiaComun = false;
+        boolean escCorComun = false;
+        boolean escPicComun = false;
+        boolean escTrebComun = false;
+
+        int contCorazonesComun = 0;        /** Son los contadores para tener el recuento de las veces que se repite un determinado palo*/
+        int contPicasComun = 0;
+        int contDiamantesComun = 0;
+        int contTrebolesComun = 0;
+        int []numeroCartaComun = new int[13]; /** Array que cuenta las veces que se repiten las cartas por su valor pero, valor carta = posicion + 2*/
+        int numeroDeLaCartaComun;
+
+        int valorPareja1Comun = 0;
+        int valorPareja2Comun = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
+        int valorActualComun;                 /** Estos contadores tienen la funcionalidad de guardar los valores para ayudar al recuento de la escalera*/
+        int valorSiguienteComun;
+        int []valorFullComun = new int[2];
+        int valorTrioComun = 0;
+        int valorEscaleraInicioComun = 0;
+        int valorEscaleraFinalComun = 0;
+        int valorColorComun = 0;
+        int valorPokerComun = 0;
+
+        for(int i=0; i<13; i++)
+            numeroCartaComun[i] = 0;
+        for(int j=0; j<2; j++)
+            valorFullComun[j] = 0;
+
+        /** Valoramos que tenemos en nuestra mano*/
+
+        if(cartasEnMano[0].getValor() == cartasEnMano[1].getValor())
+            parMano = cartasEnMano[0].getValor();
+        else{
+            if(cartasEnMano[0].getValor() > cartasEnMano[1].getValor())
+                carAlta = cartasEnMano[0].getValor();
+            else
+                carAlta = cartasEnMano[1].getValor();
+        }
+
+        /** Ahora procedemos a valorar que hay comun en la mesa*/
+
+        Collections.sort(cartasComunes, new Comparator<Carta>() {
+            public int compare(Carta c1, Carta c2) {
+                return new Integer(c1.getValor()).compareTo(new Integer(c2.getValor()));
+            }
+        });
+
+        for(int i=0; i< cartasComunes.size(); i++){
+
+            if (cartasComunes.get(i).getPalo() == 1) {    /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
+                contCorazonesComun++;                     /** Despues aumentamos el contador de dicho palo para llevar el recuento */
+                if(contCorazonesComun > 4)
+                    valorColorComun = cartasComunes.get(i).getValor();      /** Guarda el valor mas alto del color */
+            }
+            if (cartasComunes.get(i).getPalo() == 2){
+                contPicasComun++;
+                if(contPicasComun > 4)
+                    valorColorComun = cartasComunes.get(i).getValor();
+            }
+            if (cartasComunes.get(i).getPalo() == 3) {
+                contDiamantesComun++;
+                if(contDiamantesComun > 4)
+                    valorColorComun = cartasComunes.get(i).getValor();
+            }
+            if (cartasComunes.get(i).getPalo() == 4){
+                contTrebolesComun++;
+                if(contTrebolesComun > 4)
+                    valorColorComun = cartasComunes.get(i).getValor();
+            }
+
+            numeroDeLaCartaComun = cartasComunes.get(i).getValor();    /** Guardamos el valor de carta en la posicion valor - 2 (para ahorrar espacio) */
+            numeroCartaComun[numeroDeLaCartaComun - 2] = numeroCartaComun[numeroDeLaCartaComun - 2] + 1;
+
+            if((i+1) < cartasComunes.size()) {              /** Se comprueba si hay mas cartas en la mano, en cuyo caso se pasa a comprobar si hay escalera o no*/
+
+                valorActualComun = cartasComunes.get(i).getValor(); /** Para ver si tenemos escalera lo unico que tenemos que ver es si tenemos 5 cartas seguidas*/
+                valorSiguienteComun = cartasComunes.get(i+1).getValor();
+
+                if(valorActualComun+1 == valorSiguienteComun) {
+                    contEscaleraComun++;
+                    if(contEscaleraComun == 5) {
+                        escaleraComun = true;
+                        valorEscaleraFinalComun = valorSiguienteComun;
+                        valorEscaleraInicioComun = valorSiguienteComun - 5;
+                    }
+                }
+                else if(!escaleraComun)
+                    contEscaleraComun = 0;
+            }
+
+            if((cartasComunes.get(i).getValor() == 14) && (cartasComunes.get(0).getValor() == 2) &&
+                    (cartasComunes.get(1).getValor() == 3) && (cartasComunes.get(2).getValor() == 4) &&
+                    (cartasComunes.get(3).getValor() == 5)) {
+                escaleraComun = true;
+                valorEscaleraInicioComun = 14;
+                valorEscaleraFinalComun = 5;
+            }
+        }
+
+        for(int j=0; j<13; j++) { /** El array es hasta 13 porque como hemos inicializado antes, valor de la carta = posicion(j)+2 */
+
+            /** PARA PAREJAS O DOBLES PAREJAS */
+
+            if ((numeroCartaComun[j] == 2) && (pareja1Comun == false)) {
+                valorPareja1Comun = j + 2;
+            }
+            if ((numeroCartaComun[j] == 2) && (numeroCartaComun[j] != numeroCartaComun[valorPareja1]) && (pareja2Comun == false)) {
+                pareja2Comun = true;
+                dobleParejaComun = true;
+                valorPareja2Comun = j + 2;
+            }
+
+            /**PARA TRIOS Y FULL*/
+
+            if (numeroCartaComun[j] == 3) {
+
+                if ((pareja1Comun == true) || (pareja2Comun == true))
+                    fullComun = true;
+
+                if (pareja1Comun == true) {
+                    valorFullComun[0] = valorPareja1Comun;
+                    valorFullComun[1] = j + 2;
+
+                } else {
+                    trioComun = true;
+                    valorTrioComun = j + 2;
+                }
+            }
+            /** PARA POKER */
+
+            if (numeroCartaComun[j] == 4) { // Tenemos poker
+                pokerComun = true;
+                valorPokerComun = j + 2;
+            }
+        }
+
+        /** PARA COLOR */
+
+        if ((contCorazonesComun >4) || (contDiamantesComun >4) || (contPicasComun >4) || (contTrebolesComun >4)) {
+            colorComun = true;
+            if(contCorazonesComun > 4)
+                cor = true;
+
+            else if(contDiamantesComun > 4)
+                diam = true;
+
+            else if(contTrebolesComun > 4)
+                treb = true;
+
+            else if(contPicasComun > 4)
+                pic = true;
+        }
+
+        /** PARA ESCALERA DE COLOR */
+
+        if (escaleraComun && colorComun){
+            escaleraColorComun = true;
+            if(corComun)
+                escCorComun = true;
+
+            else if(trebComun)
+                escTrebComun = true;
+
+            else if(diamComun)
+                escDiaComun = true;
+
+            else if(picComun)
+                escPicComun = true;
+        }
+
+
+        /** Ahora habra que devolver la mejor mano */
+
+        if (escaleraColorComun == false){
+            if(pokerComun == false){
+                if(fullComun == false){
+                    if(colorComun == false){
+                        if (escaleraComun == false){
+                            if(trioComun == false){
+                                if(dobleParejaComun == false){
+                                    if((pareja1Comun == false) &&(pareja2Comun == false)){
+                                        valorManoComun = 1; // Tenemos Carta Alta en mesa
+                                    }else
+                                        valorManoComun = 2; // Tenemos Pareja en mesa
+                                }else
+                                    valorManoComun = 3; // Tenemos Doble Pareja en mesa
+                            }else
+                                valorManoComun = 4; // Tenemos trio en mesa
+                        }else
+                            valorManoComun = 5; // Tenemos Escalera en mesa
+                    }else
+                        valorManoComun = 6; // Tenemos Color en mesa
+                }else
+                    valorManoComun = 7; // Tenemos Full en mesa
+            }else
+                valorManoComun = 8; // Tenemos Poker en mesa
+        }else
+            valorManoComun = 9; // Tenemos Escalera de color en mesa
+
+        /**Procedemos a hacer la ponderacion de la mano*/
+
+        if(cartasComunes.size() == 0) { /**Primer caso: no tenemos cartas en mesa y solo tenemos carta alta o pareja */
+            if (parMano != 0)
+                ponderacion = (parMano * valorMano) * (valorPareja1 * valorMano); /** Lo hacemos de esta forma para evitar que si tenemos */
+            else ponderacion = carAlta;                                           /** pareja de 2, pondere mas que carta alta AS */
+        }
+        if(carAlta != 0){
+            /** Ahora vamos a considerar todos los casos cuando tengamos CARTA ALTA en mano */
+            /** Tenemos que valorar todas las combinaciones posibles(mano, mesa, mejorMano)*/
+
+             /** 1er caso: tenemos carta alta en mano */
+                /** A continuacion vamos a ver cual es nuestra mejor mano */
+
+                if (valorMano == 1) { // mejorMano --> CA
+                    if (valorManoComun == 1) { // manoMesa --> CA
+                        ponderacion = carAlta; /** Carta alta ---> mesa, mano y mejor mano*/
+                    }
+
+                    else if (valorManoComun == 2) { /** Carta alta --> mano y mejor mano.
+                                                        Pareja --> mesa */
+                        ponderacion = (carAlta * valorMano * carAlta * valorMano) / (valorPareja1Comun * valorPareja1Comun * 2);
+                        /** EJEMPLO: MANO --> CA = 7
+                         *           MEJOR MANO --> CA = 7
+                         *           MESA --> PAREJA = 2
+                         *
+                         *           PONDERACION = ((7*1)*(7*1))/(2*2*2) = 6
+                         *           Conclusion: es logico este valor, ya que tener una pareja de 2 no es muy determinante*/
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta * valorMano * carAlta * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 4) { /** Trio --> mesa*/
+                        ponderacion = (carAlta * valorMano * carAlta * valorMano) / (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta * valorMano * carAlta * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta * valorMano * carAlta * valorMano) / (valorColorComun * 5 + valorManoComun);
+                        /** Al tratarse de color hay que dar mas ponderacion dependiendo del palo:
+                         *
+                         *                          CORAZONES
+                         *                          PICAS
+                         *                          DIAMANTES
+                         *                          TREBOLES
+                         *
+                         *                   ORDENADOS POR IMPORTANCIA*/
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta * valorMano * carAlta * valorMano) / (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta * valorMano * carAlta * valorMano) / (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta * valorMano * carAlta * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+                }
+            /******************************************* HASTA AQUI CARTA ALTA COMO MEJOR MANO *******************************************************/
+
+                /** Los siguientes casos son con: Carta alta en mano
+                 *                                Pareja como mejor mano
+                 *                                y todas las combinaciones posibles en mesa*/
+
+                else if (valorMano == 2) {
+                    if (valorManoComun == 1){
+                      //  ponderacion = (carAlta * 1 * valorPareja1 * valorPareja1 * valorMano); OMITIDOS LOS 1'S PARA SIMPLIFICAR
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorMano);
+                    }
+
+                    else if (valorManoComun == 2){
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta * valorMano * valorPareja1 * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 4){
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorMano) / (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorMano) / (valorColorComun * 5 + valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorMano) / (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorMano) / (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+                }
+                /******************************************* HASTA AQUI PAREJA MEJOR MANO *******************************************************/
+
+                /** Ahora tenemos como MEJOR MANO una DOBLE PAREJA*/
+                else if (valorMano == 3) {
+                    if (valorManoComun == 1){
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano);
+                    }
+
+                    else if (valorManoComun == 2){
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 4){
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorColorComun * 5 + valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+                }
+                /******************************************* HASTA AQUI DOBLE PAREJA MEJOR MANO *******************************************************/
+
+                else if (valorMano == 4) {
+                    /** Los siguientes casos son con: Carta alta en mano
+                     *                                Trio como mejor mano
+                     *                                y todas las combinaciones posibles en mesa */
+                    if (valorManoComun == 1){
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano);
+                    }
+
+                    else if (valorManoComun == 2){
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 4){
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano) / (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano) / (valorColorComun * 5 + valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano) / (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano) / (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta * valorTrio * valorTrio * valorTrio * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+                }
+            /******************************************* HASTA AQUI TRIO MEJOR MANO *******************************************************/
+                else if (valorMano == 5) {
+                    /** Los siguientes casos son con: Carta alta en mano
+                     *                                Escalera como mejor mano
+                     *                                y todas las combinaciones posibles en mesa */
+                    if (valorManoComun == 1){
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano);
+                    }
+
+                    else if (valorManoComun == 2){
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                        (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                        (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 4){
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                        (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                        (valorColorComun * 5 + valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                         (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                        (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+                }
+                /******************************************* HASTA AQUI ESCALERA MEJOR MANO *******************************************************/
+                else if (valorMano == 6) {
+                    /** Los siguientes casos son con: Carta alta en mano
+                     *                                Color como mejor mano
+                     *                                y todas las combinaciones posibles en mesa */
+                    if (valorManoComun == 1){
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano);
+                    }
+
+                    else if (valorManoComun == 2){
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 4){
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorColorComun * 5 + valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                }
+            /******************************************* HASTA AQUI COLOR MEJOR MANO *******************************************************/
+                else if (valorMano == 7) {
+                    /** Los siguientes casos son con: Carta alta en mano
+                     *                                Full como mejor mano
+                     *                                y todas las combinaciones posibles en mesa */
+                    if (valorManoComun == 1){
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano);
+                    }
+
+                    else if (valorManoComun == 2){
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 4){
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                                (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                                (valorColorComun * 5 + valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                                (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                }
+            /******************************************* HASTA AQUI FULL MEJOR MANO *******************************************************/
+                else if (valorMano == 8) {
+                    /** Los siguientes casos son con: Carta alta en mano
+                     *                                Poker como mejor mano
+                     *                                y todas las combinaciones posibles en mesa */
+                    if (valorManoComun == 1){
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano);
+                    }
+
+                    else if (valorManoComun == 2){
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 4){
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                                (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                                (valorColorComun * 5 + valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                                (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+                }
+            /******************************************* HASTA AQUI POKER MEJOR MANO *******************************************************/
+                else if (valorMano == 9) {
+                    /** Los siguientes casos son con: Carta alta en mano
+                     *                                Escalera color como mejor mano
+                     *                                y todas las combinaciones posibles en mesa */
+                    if (valorManoComun == 1){
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano);
+
+                        if (cor)
+                            ponderacion = ponderacion + 4;
+                        else if (pic)
+                            ponderacion = ponderacion + 3;
+                        else if (diam)
+                            ponderacion = ponderacion + 2;
+                        else if (treb)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 2){
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                        if (cor)
+                            ponderacion = ponderacion + 4;
+                        else if (pic)
+                            ponderacion = ponderacion + 3;
+                        else if (diam)
+                            ponderacion = ponderacion + 2;
+                        else if (treb)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                        if (cor)
+                            ponderacion = ponderacion + 4;
+                        else if (pic)
+                            ponderacion = ponderacion + 3;
+                        else if (diam)
+                            ponderacion = ponderacion + 2;
+                        else if (treb)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 4){
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                        if (cor)
+                            ponderacion = ponderacion + 4;
+                        else if (pic)
+                            ponderacion = ponderacion + 3;
+                        else if (diam)
+                            ponderacion = ponderacion + 2;
+                        else if (treb)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                        if (cor)
+                            ponderacion = ponderacion + 4;
+                        else if (pic)
+                            ponderacion = ponderacion + 3;
+                        else if (diam)
+                            ponderacion = ponderacion + 2;
+                        else if (treb)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 6) { /** Color --> mesa*/
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorColorComun * 5 + valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 7) { /** Full --> mesa*/
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                        if (cor)
+                            ponderacion = ponderacion + 4;
+                        else if (pic)
+                            ponderacion = ponderacion + 3;
+                        else if (diam)
+                            ponderacion = ponderacion + 2;
+                        else if (treb)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 8) { /** Poker --> mesa*/
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                        if (cor)
+                            ponderacion = ponderacion + 4;
+                        else if (pic)
+                            ponderacion = ponderacion + 3;
+                        else if (diam)
+                            ponderacion = ponderacion + 2;
+                        else if (treb)
+                            ponderacion = ponderacion + 1;
+                    }
+
+                    else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                        ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                                ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                        if (corComun)
+                            ponderacion = ponderacion + 4;
+                        else if (picComun)
+                            ponderacion = ponderacion + 3;
+                        else if (diamComun)
+                            ponderacion = ponderacion + 2;
+                        else if (trebComun)
+                            ponderacion = ponderacion + 1;
+                    }
+                }
+            /******************************************* HASTA AQUI ESCALERA DE COLOR MEJOR MANO *********************************************/
+        }/** Final carta alta en mano*/
+
+            /** AHORA VAMOS A TRATAR LOS CASOS EN LOS QUE TENGAMOS PAREJA EN MANO*/
+
+        else { // if(parMano !=0 )
+                /** Seria el mismo codigo pero cambiando la primera parte del calculo de la ponderacion
+                 * el unico cambio seria que en mano tendriamos pareja
+                 * 1er caso: tenemos carta alta en mano
+                 * A continuacion vamos a ver cual es nuestra mejor mano */
+
+            /** NOTA: NO SE PUEDE DAR EL CASO DE QUE TENGAMOS EN MANO CARTA ALTA O NUESTRA MEJOR MANO SEA CARTA ALTA (MINIMO PAREJA COMO MEJOR MANO)*/
+
+            /** Los siguientes casos son con: Pareja en mano
+             *                                Pareja como mejor mano
+             *                                y todas las combinaciones posibles en mesa*/
+
+            if (valorMano == 2) {
+                if (valorManoComun == 1){
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorMano);
+                }
+
+                else if (valorManoComun == 2){
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorMano * valorPareja1 * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 4){
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorMano) / (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                }
+
+                else if (valorManoComun == 6) { /** Color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorMano) / (valorColorComun * 5 + valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 7) { /** Full --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorMano) / (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                }
+
+                else if (valorManoComun == 8) { /** Poker --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorMano) / (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+            }
+            /******************************************* HASTA AQUI PAREJA MEJOR MANO *******************************************************/
+
+            /** Ahora tenemos como MEJOR MANO una DOBLE PAREJA*/
+            else if (valorMano == 3) {
+                if (valorManoComun == 1){
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano);
+                }
+
+                else if (valorManoComun == 2){
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 4){
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                }
+
+                else if (valorManoComun == 6) { /** Color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorColorComun * 5 + valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 7) { /** Full --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                }
+
+                else if (valorManoComun == 8) { /** Poker --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) / (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPareja1 * valorPareja1 * valorPareja2 * valorPareja2 * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+            }
+            /******************************************* HASTA AQUI DOBLE PAREJA MEJOR MANO *******************************************************/
+
+            else if (valorMano == 4) {
+                /** Los siguientes casos son con: Carta alta en mano
+                 *                                Trio como mejor mano
+                 *                                y todas las combinaciones posibles en mesa */
+                if (valorManoComun == 1){
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano);
+                }
+
+                else if (valorManoComun == 2){
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano) / (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 4){
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano) / (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                }
+
+                else if (valorManoComun == 6) { /** Color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano) / (valorColorComun * 5 + valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 7) { /** Full --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano) / (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                }
+
+                else if (valorManoComun == 8) { /** Poker --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano) / (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorTrio * valorTrio * valorTrio * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+            }
+            /******************************************* HASTA AQUI TRIO MEJOR MANO *******************************************************/
+            else if (valorMano == 5) {
+                /** Los siguientes casos son con: Carta alta en mano
+                 *                                Escalera como mejor mano
+                 *                                y todas las combinaciones posibles en mesa */
+                if (valorManoComun == 1){
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano);
+                }
+
+                else if (valorManoComun == 2){
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 4){
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                }
+
+                else if (valorManoComun == 6) { /** Color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorColorComun * 5 + valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 7) { /** Full --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                }
+
+                else if (valorManoComun == 8) { /** Poker --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+            }
+            /******************************************* HASTA AQUI ESCALERA MEJOR MANO *******************************************************/
+            else if (valorMano == 6) {
+                /** Los siguientes casos son con: Carta alta en mano
+                 *                                Color como mejor mano
+                 *                                y todas las combinaciones posibles en mesa */
+                if (valorManoComun == 1){
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano);
+                }
+
+                else if (valorManoComun == 2){
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 4){
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                }
+
+                else if (valorManoComun == 6) { /** Color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorColorComun * 5 + valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 7) { /** Full --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
+                }
+
+                else if (valorManoComun == 8) { /** Poker --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+            }
+            /******************************************* HASTA AQUI COLOR MEJOR MANO *******************************************************/
+            else if (valorMano == 7) {
+                /** Los siguientes casos son con: Carta alta en mano
+                 *                                Full como mejor mano
+                 *                                y todas las combinaciones posibles en mesa */
+                if (valorManoComun == 1){
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano);
+                }
+
+                else if (valorManoComun == 2){
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 4){
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                            (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                }
+
+                else if (valorManoComun == 6) { /** Color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                            (valorColorComun * 5 + valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 7) { /** Full --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 8) { /** Poker --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                            (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+            }
+            /******************************************* HASTA AQUI FULL MEJOR MANO *******************************************************/
+            else if (valorMano == 8) {
+                /** Los siguientes casos son con: Carta alta en mano
+                 *                                Poker como mejor mano
+                 *                                y todas las combinaciones posibles en mesa */
+                if (valorManoComun == 1){
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano);
+                }
+
+                else if (valorManoComun == 2){
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                }
+
+                else if (valorManoComun == 4){
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                            (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                }
+
+                else if (valorManoComun == 6) { /** Color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                            (valorColorComun * 5 + valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 7) { /** Full --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 8) { /** Poker --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                            (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                }
+
+                else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+            }
+            /******************************************* HASTA AQUI POKER MEJOR MANO *******************************************************/
+            else if (valorMano == 9) {
+                /** Los siguientes casos son con: Carta alta en mano
+                 *                                Escalera color como mejor mano
+                 *                                y todas las combinaciones posibles en mesa */
+                if (valorManoComun == 1){
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano);
+
+                    if (cor)
+                        ponderacion = ponderacion + 4;
+                    else if (pic)
+                        ponderacion = ponderacion + 3;
+                    else if (diam)
+                        ponderacion = ponderacion + 2;
+                    else if (treb)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 2){
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorManoComun);
+                    if (cor)
+                        ponderacion = ponderacion + 4;
+                    else if (pic)
+                        ponderacion = ponderacion + 3;
+                    else if (diam)
+                        ponderacion = ponderacion + 2;
+                    else if (treb)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
+                    if (cor)
+                        ponderacion = ponderacion + 4;
+                    else if (pic)
+                        ponderacion = ponderacion + 3;
+                    else if (diam)
+                        ponderacion = ponderacion + 2;
+                    else if (treb)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 4){
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
+                    if (cor)
+                        ponderacion = ponderacion + 4;
+                    else if (pic)
+                        ponderacion = ponderacion + 3;
+                    else if (diam)
+                        ponderacion = ponderacion + 2;
+                    else if (treb)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 5) { /** Escalera --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+                    if (cor)
+                        ponderacion = ponderacion + 4;
+                    else if (pic)
+                        ponderacion = ponderacion + 3;
+                    else if (diam)
+                        ponderacion = ponderacion + 2;
+                    else if (treb)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 6) { /** Color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorColorComun * 5 + valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 7) { /** Full --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                    if (cor)
+                        ponderacion = ponderacion + 4;
+                    else if (pic)
+                        ponderacion = ponderacion + 3;
+                    else if (diam)
+                        ponderacion = ponderacion + 2;
+                    else if (treb)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 8) { /** Poker --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
+                    if (cor)
+                        ponderacion = ponderacion + 4;
+                    else if (pic)
+                        ponderacion = ponderacion + 3;
+                    else if (diam)
+                        ponderacion = ponderacion + 2;
+                    else if (treb)
+                        ponderacion = ponderacion + 1;
+                }
+
+                else if (valorManoComun == 9) { /** Escalera color --> mesa*/
+                    ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                            ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
+
+                    if (corComun)
+                        ponderacion = ponderacion + 4;
+                    else if (picComun)
+                        ponderacion = ponderacion + 3;
+                    else if (diamComun)
+                        ponderacion = ponderacion + 2;
+                    else if (trebComun)
+                        ponderacion = ponderacion + 1;
+                }
+            }
+            /******************************************* HASTA AQUI ESCALERA DE COLOR MEJOR MANO *********************************************/
+        }
+
+        return ponderacion;
     }
     public void tomarDecision(){    /** Tomare cada decision como un entero, 0 no ir, 1 pasar, 2 apostar*/
 
         /** Una buena opcion es crear un arraylist y añadir las cartas actuales y mandarlo al borroso para
          ver que podemos hacer con la mejor mano que tenemos*/
 
-
-        /*
-            COMIENZO CONTROLADOR BORROSO
-         */
-
+            /***********************************************
+             *          COMIENZO CONTROLADOR BORROSO       *
+             ***********************************************/
         FIS fis = new FIS();
         FunctionBlock fb = new FunctionBlock(fis);
         fis.addFunctionBlock("Decision", fb);
@@ -420,12 +2023,12 @@ public class Jugador {
         mano.add(ltMuyBuena);
 
         /**  DEFUZZIFY decision
-           TERM pasarNI := ;
-            TERM igualar := ;
-           TERM subir := ;
-            METHOD : COG;
-            DEFAULT := 0;
-          END_DEFUZZIFY */
+         TERM pasarNI := ;
+         TERM igualar := ;
+         TERM subir := ;
+         METHOD : COG;
+         DEFAULT := 0;
+         END_DEFUZZIFY */
 
         /*
             TODO : definir forma de los terminos de decision (gauss, trapezoidal..?). En principio, Gauss.
@@ -580,7 +2183,7 @@ public class Jugador {
         ruleBlock.add(rule9);
 
         /** RULE 10: IF fase IS turn/river AND (mano IS buena AND fichas IS pocas) THEN Igualar || SUBIR
-        * Inicialmente, se habia contemplado que los posibles valores de decision eran No ir, Pasar y Apostar (igualar y subir).
+         * Inicialmente, se habia contemplado que los posibles valores de decision eran No ir, Pasar y Apostar (igualar y subir).
          * Realmente, los que se comportan de la misma forma son No ir y Pasar, ya que contemplamos que intentara pasar y,
          * si no puede, no irá, lo que se controlara de forma externa al controlador.
          *
