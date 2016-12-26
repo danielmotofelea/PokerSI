@@ -163,20 +163,6 @@ public class Jugador {
         for(int j=0; j<cartasComunes.size(); j++)                           /** Para pasarselo a otro metodo y que evalue la mejor mano*/
             manoProvisional.add(cartasComunes.get(j));
 
-       /** switch (calcularMejorMano(manoProvisional)){
-            case 1:
-                for(k=0; k< manoProvisional.size(); k++){
-                    if(manoProvisional.get(k).getValor()> posMejorCarta1)
-                        posMejorCarta1 = manoProvisional.get(k).getValor();
-                }
-                mejorMano.add(manoProvisional.get(posMejorCarta1));
-            case 2:
-                for(k=0; k< manoProvisional.size(); k++){
-                    numCarta[manoProvisional.get(k).getValor()-2] = numCarta[manoProvisional.get(k).getValor()-2] + 1;
-                }
-        }*/
-
-
         /** Ya tenemos el valor de nuestra mejor mano pero para apostar debemos hacer una consulta al sistema borroso
          *  y tomar una decision, de si apostar, pasar o irse, todo esto dependiendo de los jugadores que haya aun en la mesa
          *  cuantas fichas tengamos y sobre todo nuestra mano */
@@ -189,7 +175,7 @@ public class Jugador {
      *                   1 que sea el tipo de mano(sin especificar),
      *                   2 que sea la ponderacion(llamando al metodo de ponderacion)*/
 
-    public int  calcularMejorMano( ArrayList<Carta> manoProvisional){
+    public double [] calcularMejorMano(ArrayList<Carta> manoProvisional){
 
         int numCartas = manoProvisional.size();
 
@@ -231,6 +217,7 @@ public class Jugador {
         int valorColor = 0;
         int valorPoker = 0;
 
+        double mejorMano = new double[2]; /** Se usará como retorno de la función*/
         // int resul = 1;            /** Valor por defecto, dado que si no tenemos ninguna de las manos anteriores, tendremos carta alta*/
 
         for(int i=0; i<13; i++)
@@ -251,27 +238,41 @@ public class Jugador {
             }
         });
 
+        /** Valoramos de qué palo es cada carta, y también si hay COLOR*/
         for(int i=0; i < numCartas; i++){
 
             if (cartasComunes.get(i).getPalo() == 1) {    /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
                 contCorazones++;                          /** Despues aumentamos el contador de dicho palo para llevar el recuento */
-                if(contCorazones > 4)
+                if(contCorazones > 4){
                     valorColor = cartasComunes.get(i).getValor();      /** Guarda el valor mas alto del color */
+                    color = true;
+                    cor = true;
+                }
+
             }
             if (cartasComunes.get(i).getPalo() == 2){
                 contPicas++;
-                if(contPicas > 4)
+                if(contPicas > 4){
                     valorColor = cartasComunes.get(i).getValor();
+                    color = true;
+                    pic = true;
+                }
             }
             if (cartasComunes.get(i).getPalo() == 3) {
                 contDiamantes++;
-                if(contDiamantes > 4)
+                if(contDiamantes > 4){
                     valorColor = cartasComunes.get(i).getValor();
+                    color = true;
+                    diam = true;
+                }
             }
             if (cartasComunes.get(i).getPalo() == 4){
                 contTreboles++;
-                if(contTreboles > 4)
+                if(contTreboles > 4){
                     valorColor = cartasComunes.get(i).getValor();
+                    color = true;
+                    treb = true;
+                }
             }
             numeroDeLaCarta = manoProvisional.get(i).getValor();    /** Guardamos el valor de carta en la posicion valor - 2 (para ahorrar espacio) */
             numeroCarta[numeroDeLaCarta - 2] = numeroCarta[numeroDeLaCarta - 2] + 1;
@@ -325,11 +326,14 @@ public class Jugador {
 
             if (numeroCarta[j] == 3) {
                 if ((pareja1 == true) || (pareja2 == true)) // Si tenemos un contador con 3 y otro con 2, entonces tenemos Full
-
+                {
                     full = true;
-                if (pareja1 == true) {
-                    valorFull[0] = valorPareja1;
+                    if (valorPareja1 > valorPareja2) {
+                        valorFull[0] = valorPareja1;
+                    }else valorFull[0] = valorPareja2;
+
                     valorFull[1] = j + 2;
+
                 } else {
                     trio = true;
                     valorTrio = j + 2;
@@ -343,22 +347,8 @@ public class Jugador {
             }
         }
 
-        /** PARA COLOR */
+        /** COLOR VALORADO ANTERIORMENTE */
 
-        if ((contCorazones >4) || (contDiamantes >4) || (contPicas >4) || (contTreboles >4)) {
-            color = true;
-            if(contCorazones > 4)
-                cor = true;
-
-                else if(contDiamantes > 4)
-                    diam = true;
-
-                    else if(contTreboles > 4)
-                        treb = true;
-
-                        else if(contPicas > 4)
-                            pic = true;
-        }
 
         /** OBSERVACION: Para escalera no hace falta valorar dado que si anteriormente escalera = true
          *               ya sabemos que tenemos escalera. */
@@ -391,23 +381,23 @@ public class Jugador {
                             if(trio == false){
                                 if(doblePareja == false){
                                     if((pareja1 == false) &&(pareja2 == false)){
-                                        valorMano = 1;
+                                        this.valorMano = 1;
                                     }else
-                                        valorMano = 2; // Tenemos Pareja
+                                        this.valorMano = 2; // Tenemos Pareja
                                 }else
-                                    valorMano = 3; // Tenemos Doble Pareja
+                                    this.valorMano = 3; // Tenemos Doble Pareja
                             }else
-                                valorMano = 4; // Tenemos trio
+                                this.valorMano = 4; // Tenemos trio
                         }else
-                            valorMano = 5; // Tenemos Escalera
+                            this.valorMano = 5; // Tenemos Escalera
                     }else
-                        valorMano = 6; // Tenemos Color
+                        this.valorMano = 6; // Tenemos Color
                 }else
-                    valorMano = 7; // Tenemos Full
+                    this.valorMano = 7; // Tenemos Full
             }else
-                valorMano = 8; // Tenemos Poker
+                this.valorMano = 8; // Tenemos Poker
         }else
-            valorMano = 9; // Tenemos Escalera de color
+            this.valorMano = 9; // Tenemos Escalera de color
 
         /** valorMano = 1 ---> CARTA ALTA
          *              2 ---> PAREJA
@@ -419,10 +409,12 @@ public class Jugador {
          *              8 ---> POKER
          *              9 ---> ESCALERA DE COLOR                   */
 
-        float ponderacion = ponderarMano(valorMano, escPic, escCor, escDia, escTreb, cor, pic, treb, diam, valorPareja1, valorPareja2,
+        mejorMano[0] = (double) this.valorMano;
+
+        mejorMano[1] = ponderarMano(escPic, escCor, escDia, escTreb, cor, pic, treb, diam, valorPareja1, valorPareja2,
                 valorPoker, valorTrio, valorFull,valorColor, valorEscaleraInicio, valorEscaleraFinal);
 
-        return valorMano;
+        return mejorMano;
     }
 
     /** Metodo creado para ponderar las mano mano que tenemos nosotros con la mejor de la mesa, es decir,
@@ -432,11 +424,11 @@ public class Jugador {
      *       y asi evitar calcular de nuevo la mejor mano. (añadido, si no, resulta util buscar otra forma)*/
 
 
-    public float ponderarMano(int valorMano, boolean escPic, boolean escCor, boolean escDia,boolean escTreb,
+    public double ponderarMano(boolean escPic, boolean escCor, boolean escDia,boolean escTreb,
                             boolean cor, boolean pic, boolean treb, boolean diam, int valorPareja1, int valorPareja2,
                             int valorPoker, int valorTrio, int []valorFull,int valorColor, int valorEscaleraInicio, int valorEscaleraFinal){
 
-        int ponderacion = 0;
+        double ponderacion = 0;
 
         /** En el metodo recibimos la mejor combinacion que tenemos respecto de todas las cartas
          *
@@ -507,7 +499,7 @@ public class Jugador {
                 carAlta = cartasEnMano[1].getValor();
         }
 
-        /** Ahora procedemos a valorar que hay comun en la mesa*/
+        /** Ahora procedemos a valorar que hay COMUN en la mesa*/
 
         Collections.sort(cartasComunes, new Comparator<Carta>() {
             public int compare(Carta c1, Carta c2) {
@@ -515,27 +507,45 @@ public class Jugador {
             }
         });
 
+        /**
+         * Contamos cuantas cartas hay de cada palo, y se valora si hay COLOR
+         */
         for(int i=0; i< cartasComunes.size(); i++){
 
             if (cartasComunes.get(i).getPalo() == 1) {    /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
                 contCorazonesComun++;                     /** Despues aumentamos el contador de dicho palo para llevar el recuento */
-                if(contCorazonesComun > 4)
+                if(contCorazonesComun > 4) {
                     valorColorComun = cartasComunes.get(i).getValor();      /** Guarda el valor mas alto del color */
+                    colorComun = true;
+                    corComun = true;
+                }
             }
             if (cartasComunes.get(i).getPalo() == 2){
                 contPicasComun++;
-                if(contPicasComun > 4)
+                if(contPicasComun > 4){
                     valorColorComun = cartasComunes.get(i).getValor();
+                    colorComun = true;
+                    picComun = true;
+                }
+
             }
             if (cartasComunes.get(i).getPalo() == 3) {
                 contDiamantesComun++;
-                if(contDiamantesComun > 4)
+                if(contDiamantesComun > 4){
                     valorColorComun = cartasComunes.get(i).getValor();
+                    colorComun = true;
+                    diamComun = true;
+                }
+
             }
             if (cartasComunes.get(i).getPalo() == 4){
                 contTrebolesComun++;
-                if(contTrebolesComun > 4)
+                if(contTrebolesComun > 4){
                     valorColorComun = cartasComunes.get(i).getValor();
+                    colorComun = true;
+                    trebComun = true;
+                }
+
             }
 
             numeroDeLaCartaComun = cartasComunes.get(i).getValor();    /** Guardamos el valor de carta en la posicion valor - 2 (para ahorrar espacio) */
@@ -551,13 +561,16 @@ public class Jugador {
                     if(contEscaleraComun == 5) {
                         escaleraComun = true;
                         valorEscaleraFinalComun = valorSiguienteComun;
-                        valorEscaleraInicioComun = valorSiguienteComun - 5;
+                        valorEscaleraInicioComun = valorEscaleraFinalComun - 4; //Escalera de ejemplo: 5-6-7-8-9, el valor inicial es el final - 4
                     }
                 }
                 else if(!escaleraComun)
                     contEscaleraComun = 0;
             }
 
+            /**
+                A continuación, comprobamos el caso especial de la escalera A-2-3-4-5
+             */
             if((cartasComunes.get(i).getValor() == 14) && (cartasComunes.get(0).getValor() == 2) &&
                     (cartasComunes.get(1).getValor() == 3) && (cartasComunes.get(2).getValor() == 4) &&
                     (cartasComunes.get(3).getValor() == 5)) {
@@ -567,11 +580,12 @@ public class Jugador {
             }
         }
 
-        for(int j=0; j<13; j++) { /** El array es hasta 13 porque como hemos inicializado antes, valor de la carta = posicion(j)+2 */
+        for(int j=0; j<13; j++) { /** El array es hasta 13 porque, como hemos inicializado antes, valor de la carta = posicion(j)+2 */
 
             /** PARA PAREJAS O DOBLES PAREJAS */
 
             if ((numeroCartaComun[j] == 2) && (pareja1Comun == false)) {
+                pareja1Comun = true;
                 valorPareja1Comun = j + 2;
             }
             if ((numeroCartaComun[j] == 2) && (numeroCartaComun[j] != numeroCartaComun[valorPareja1]) && (pareja2Comun == false)) {
@@ -584,13 +598,14 @@ public class Jugador {
 
             if (numeroCartaComun[j] == 3) {
 
-                if ((pareja1Comun == true) || (pareja2Comun == true))
+                if ((pareja1Comun == true) || (pareja2Comun == true)){
                     fullComun = true;
 
-                if (pareja1Comun == true) {
-                    valorFullComun[0] = valorPareja1Comun;
-                    valorFullComun[1] = j + 2;
+                    if (valorPareja1Comun > valorPareja2Comun) {
+                        valorFullComun[0] = valorPareja1Comun;
+                    } else valorFullComun[0] = valorPareja2Comun;
 
+                    valorFullComun[1] = j + 2; //Valor del trío que forma parte del full común
                 } else {
                     trioComun = true;
                     valorTrioComun = j + 2;
@@ -604,22 +619,8 @@ public class Jugador {
             }
         }
 
-        /** PARA COLOR */
+        /** COLOR VALORADO ANTERIORMENTE */
 
-        if ((contCorazonesComun >4) || (contDiamantesComun >4) || (contPicasComun >4) || (contTrebolesComun >4)) {
-            colorComun = true;
-            if(contCorazonesComun > 4)
-                cor = true;
-
-            else if(contDiamantesComun > 4)
-                diam = true;
-
-            else if(contTrebolesComun > 4)
-                treb = true;
-
-            else if(contPicasComun > 4)
-                pic = true;
-        }
 
         /** PARA ESCALERA DE COLOR */
 
@@ -1927,7 +1928,8 @@ public class Jugador {
 
         return ponderacion;
     }
-    public void tomarDecision(){    /** Tomare cada decision como un entero, 0 no ir, 1 pasar, 2 apostar*/
+
+    public int tomarDecision(){    /** Tomare cada decision como un entero: 0 pasar/noIr, la cantidad a apostar en caso de igualar o subir*/
 
         /** Una buena opcion es crear un arraylist y añadir las cartas actuales y mandarlo al borroso para
          ver que podemos hacer con la mejor mano que tenemos*/
@@ -2219,6 +2221,10 @@ public class Jugador {
 
         /**
          * TODO especificar cada cuantas generaciones (atributo numGeneracion de Main) hay que guardar en fichero el output del fis
+         */
+
+        /**
+         * TODO establecer return
          */
     }
 
