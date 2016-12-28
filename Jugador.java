@@ -2057,7 +2057,7 @@ public class Jugador {
 
         /*
             TODO : definir forma de los terminos de decision (gauss, trapezoidal..?). En principio, Gauss.
-            En principio, el metodo de defuzzyficacion será el de Centro de Gravedad, pues parece ser el más usado
+            El metodo de defuzzyficacion será el de Centro de Gravedad, pues parece ser el más usado
          */
 
         MembershipFunction mPasarNI = new MembershipFunctionGaussian(new Value(), new Value());
@@ -2072,14 +2072,15 @@ public class Jugador {
         decision.add(ltIgualar);
         decision.add(ltSubir);
 
+        decision.setDefuzzifier(new DefuzzifierCenterOfGravity(decision));
+
         /**
          * Bloque de reglas
          *
          * Se han omitido declaraciones repetidas de términos, a pesar de que en los ejemplos
-         * si se mantenían repetidas. En las pruebas se comprobará si la omisión es correcta o no, por si acaso
-         * está la implementación literal comentada en cada regla.
+         * si se mantenían repetidas. Se han hecho pruebas y esta omisión funciona correctamente.
          *
-         * En caso de que lo anterior funcione, quizá se podría probar a omitir también algunas RuleExpression,
+         * Quizá se podría probar a omitir también algunas RuleExpression,
          * que también se repiten aunque con menor frecuencia. Esto también podría dificultar la lectura del código
          * por lo que queda descartado por el momento.
          *
@@ -2212,7 +2213,7 @@ public class Jugador {
          * Realmente, los que se comportan de la misma forma son No ir y Pasar, ya que contemplamos que intentara pasar y,
          * si no puede, no irá, lo que se controlara de forma externa al controlador.
          *
-         * Por ello, esta útlima regla no se podra implementar, deberá aprender el jugador por sí solo lo que debe hacer
+         * Por ello, esta última regla no se podrá implementar, deberá aprender el jugador por sí solo lo que debe hacer
          */
 
 
@@ -2231,7 +2232,18 @@ public class Jugador {
         /*
             END_RULEBLOCK
          */
-        pruebaBorroso(fis); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
+        /*
+            END_FUNTIONBLOCK
+         */
+
+        /**
+         * Utilizaremos un HashMap para guardar las reglas y poder mostrarlas por pantalla de una forma sencilla
+         */
+        HashMap<String, RuleBlock> ruleBlockHashMap = new HashMap<String, RuleBlock>();
+        ruleBlocksHashMap.put(ruleBlock.getName(), ruleBlock);
+        fb.setRuleBlocks(ruleBlocksHashMap);
+
+        pruebaBorroso(ruleBlocksMap); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
 
         /**
          * TODO especificar donde se van a guardar los valores de grado de soporte y peso de las reglas, etc
@@ -2254,12 +2266,14 @@ public class Jugador {
     /**
      * La única finalidad de la función pruebaBorroso es comprobar que las reglas y las variables han quedado bien
      * definidas.
-     * @param fis
+     * @param ruleBlockHashMap
      */
-    public void pruebaBorroso(FIS fis)
+    public void pruebaBorroso(HashMap<String, RuleBlock> ruleBlockHashMap)
     {
         /**
          * TODO definir prueba del borroso
          */
+        System.out.println(ruleBlockHashMap.toString());
+
     }
 }
