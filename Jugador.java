@@ -22,7 +22,7 @@ public class Jugador {
     private int fichasApostadas;
     private int manosGanadas;
     private int manosJugadas;
-    private double []gen; /** Posiciones 0 a 8: pesos de reglas, posicion 9: agresividad */
+    private double []gen; /** Posiciones 0 a 10: pesos de reglas, posicion 11: agresividad */
 
     private int valorMano;
     private float fitness;
@@ -39,7 +39,7 @@ public class Jugador {
         this.manosJugadas = 0;
         this.fitness = 0;
         this.valorMano = 1;
-        this.gen = new double[10];                     /** Tamaño 10 por ser 9 pesos de reglas + valor de agresividad*/
+        this.gen = new double[12];                     /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
         this.cartasEnMano = new Carta[2] ;             /** Las dos cartas en mano las tomamos como enteros*/
         this.cartasComunes = new ArrayList<Carta>();   /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
@@ -105,7 +105,7 @@ public class Jugador {
     }
 
     public void setGen(double[] gen) {
-        this.gen = gen;
+        System.arraycopy(gen, 0, this.gen, 0, gen.length);
     }
 
     public int[] getIdentificacion() {
@@ -113,7 +113,7 @@ public class Jugador {
     }
 
     public void setIdentificacion(int[] identificacion) {
-        this.identificacion = identificacion;
+        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length)
     }
 
     public void setFitness(float valor){
@@ -2056,13 +2056,38 @@ public class Jugador {
          END_DEFUZZIFY */
 
         /*
-            TODO : definir forma de los terminos de decision (gauss, trapezoidal..?). En principio, Gauss.
-            El metodo de defuzzyficacion será el de Centro de Gravedad, pues parece ser el más usado
+            Decision devolvera la cantidad de ciegas a subir. Como la apuesta es un valor entero, tomaremos sólo
+            la parte entera del valor que devuelva la defuzzyficacion:
+            Pasar/NoIr: 0 a 1
+            Igualar: 0.5 a 2 (iguala la apuesta mínima)
+            Apostar: 1 a 10.
+
+            Ejemplos:
+                        -si obtenemos un valor de 0'6, se considerará pasar/noIr o igualar en función de las reglas
+                        -si obtenemos un valor de 1'9, se considerará Igualar o subir en función de las reglas
+                        -si obtenemos un valor de 3'7, se tomará una subida de 3 veces la ciega grande
+
+            Formula que determinará el retorno: apuestaMínima + valorDecisión(entero) + valorDecision*agresividad
+
+            Habrá que determinar si la agresividad sería necesaria, viendo que sólo se tiene en cuenta en la subida
+            y esta ya devuelve una cantidad de subida (que hay que limitar, en funcion del valor de las ciegas)
+
+            Lo recomendable sería hacer pruebas cuando la aplicación esté operativa, para ver si se usa correctamente
+            todo el rango de subidas que tendrá asignada la aplicación o, por el contrario, se confirma la necesidad
+            de la agresividad.
          */
 
-        MembershipFunction mPasarNI = new MembershipFunctionGaussian(new Value(), new Value());
-        MembershipFunction mIgualar = new MembershipFunctionGaussian(new Value(), new Value());
-        MembershipFunction mSubir = new MembershipFunctionGaussian(new Value(), new Value());
+        Value pniX[] = { new Value(0), new Value(1) };
+        Value pniY[] = { new Value(1), new Value(0) };
+        MembershipFunction mPasarNI = new MembershipFunctionPieceWiseLinear(pniX, pniY);
+
+        Value igX[] = { new Value(0.5), new Value(1), new Value(2) };
+        Value igY[] = { new Value(0), new Value(1), new Value(0) };
+        MembershipFunction mIgualar = new MembershipFunctionPieceWiseLinear(igX, igY);
+
+        Value subX[] = { new Value(1), new Value(2), new Value(10) }; //Habrá que ver si 10 se deja como máximo o no
+        Value subY[] = { new Value(0), new Value(1), new Value(1) };
+        MembershipFunction mSubir = new MembershipFunctionPieceWiseLinear(subX, subY);
 
         LinguisticTerm ltpasarNI = new LinguisticTerm("pasar/noIr", mPasarNI);
         LinguisticTerm ltIgualar = new LinguisticTerm("igualar", mIgualar);
@@ -2130,8 +2155,6 @@ public class Jugador {
           */
 
         Rule rule4 = new Rule("Regla4", ruleBlock);
-        //RuleTerm t1r4 = new RuleTerm(fase, "preflop", false); En el ejemplo se declaran repetidas, pero a lo mejor no hace falta
-        //RuleTerm t2r4 = new RuleTerm(mano, "mala", false);
         RuleTerm rtFichasMedias = new RuleTerm(fichas, "medias", false);
         RuleTerm rtFichasMuchas = new RuleTerm(fichas, "muchas", false);
         RuleExpression r4AntecedenteAnd1 = new RuleExpression(rtFasePreflop, rtManoMala, RuleConnectionMethodAndMin.get());
@@ -2146,9 +2169,7 @@ public class Jugador {
           */
 
         Rule rule5 = new Rule("Regla5", ruleBlock);
-        //RuleTerm t1r5 = new RuleTerm(fase, "preflop", false);  En el ejemplo se declaran repetidas, pero a lo mejor no hace falta
         RuleTerm rtManoBuena = new RuleTerm(mano, "buena", false);
-        //RuleTerm t3r5 = new RuleTerm(fichas, "pocas", false);
         RuleExpression r5AntecedenteAnd1 = new RuleExpression(rtFasePreflop, rtManoBuena, RuleConnectionMethodAndMin.get());
         RuleExpression r5AntecedenteAnd2 = new RuleExpression(r5AntecedenteAnd1, rtFichasPocas, RuleConnectionMethodAndMin.get());
         rule5.setAntecedents(r5AntecedenteAnd2);
@@ -2160,10 +2181,6 @@ public class Jugador {
           */
 
         Rule rule6 = new Rule("Regla6", ruleBlock);
-        //RuleTerm t1r6 = new RuleTerm(fase, "preflop", false);  En el ejemplo se declaran repetidas, pero a lo mejor no hace falta
-        //RuleTerm t2r6 = new RuleTerm(mano, "buena", false);
-        //RuleTerm t3r6 = new RuleTerm(fichas, "medias", false);
-        //RuleTerm t4r6 = new RuleTerm(fichas, "muchas", false);
         RuleExpression r6AntecedenteAnd1 = new RuleExpression(rtFasePreflop, rtManoBuena, RuleConnectionMethodAndMin.get());
         RuleExpression r6AntecedenteOr1 = new RuleExpression(rtFichasMedias, rtFichasMuchas, RuleConnectionMethodOrMax.get());
         RuleExpression r6AntecedenteAnd2 = new RuleExpression(r6AntecedenteAnd1, r6AntecedenteOr1, RuleConnectionMethodAndMin.get());
@@ -2177,9 +2194,7 @@ public class Jugador {
 
         Rule rule7 = new Rule("Regla7", ruleBlock);
         RuleTerm rtFaseFlop = new RuleTerm(fase, "flop", false);
-        //RuleTerm t2r7 = new RuleTerm(mano, "mala", false);
-        //RuleTerm t3r7 = new RuleTerm(fichas, "pocas", false);
-        //RuleTerm t4r7 = new RuleTerm(fichas, "medias", false);
+
         RuleExpression r7AntecedenteAnd1 = new RuleExpression(rtFaseFlop, rtManoMala, RuleConnectionMethodAndMin.get());
         RuleExpression r7AntecedenteOr1 = new RuleExpression(rtFichasPocas, rtFichasMedias, RuleConnectionMethodOrMax.get());
         RuleExpression r7AntecedenteAnd2 = new RuleExpression(r7AntecedenteAnd1, r7AntecedenteOr1, RuleConnectionMethodAndMin.get());
@@ -2208,17 +2223,34 @@ public class Jugador {
         rule9.addConsequent(decision, "pasar/noIr", false);
         ruleBlock.add(rule9);
 
-        /** RULE 10: IF fase IS turn/river AND (mano IS buena AND fichas IS pocas) THEN Igualar || SUBIR
-         * Inicialmente, se habia contemplado que los posibles valores de decision eran No ir, Pasar y Apostar (igualar y subir).
-         * Realmente, los que se comportan de la misma forma son No ir y Pasar, ya que contemplamos que intentara pasar y,
-         * si no puede, no irá, lo que se controlara de forma externa al controlador.
-         *
-         * Por ello, esta última regla no se podrá implementar, deberá aprender el jugador por sí solo lo que debe hacer
+        /** RULE 10: IF (fase IS turn/river AND mano IS buena) AND fichas IS pocas THEN Igualar || SUBIR
+         * Esta regla se dividirá en 2, una para igualar y otra para subir. Los pesos que tenga cada jugador
+         * determinarán que decisión tomará si se da el caso
          */
 
+        /*
+            Igualar
+         */
+        Rule rule10 = new Rule("Regla10", ruleBlock);
+        RuleExpression r10AntecedenteAnd1 = new RuleExpression(rtFaseTR, rtManoBuena, RuleConnectionMethodAndMin.get());
+        RuleExpression r10AntecedenteAnd2 = new RuleExpression(r10AntecedenteAnd1, rtFichasPocas, RuleConnectionMethodAndMin.get());
+        rule10.setAntecedents(r10AntecedenteAnd2);
+        rule10.addConsequent(decision, "igualar", false);
+        ruleBlock.add(rule10);
 
         /*
-         * Los pesos se obtienen de las 9 primeras posiciones de gen
+            Subir
+         */
+
+        Rule rule11 = new Rule("Regla11", ruleBlock);
+        RuleExpression r11AntecedenteAnd1 = new RuleExpression(rtFaseTR, rtManoBuena, RuleConnectionMethodAndMin.get());
+        RuleExpression r11AntecedenteAnd2 = new RuleExpression(r11AntecedenteAnd1, rtFichasPocas, RuleConnectionMethodAndMin.get());
+        rule11.setAntecedents(r11AntecedenteAnd2);
+        rule11.addConsequent(decision, "subir", false);
+        ruleBlock.add(rule11);
+
+        /*
+         * Los pesos se obtienen de las 11 primeras posiciones de gen
          */
         rule1.setWeight(gen[0]);
         rule2.setWeight(gen[1]);
@@ -2229,6 +2261,8 @@ public class Jugador {
         rule7.setWeight(gen[6]);
         rule8.setWeight(gen[7]);
         rule9.setWeight(gen[8]);
+        rule10.setWeight(gen[9]);
+        rule11.setWeight(gen[10]);
         /*
             END_RULEBLOCK
          */
