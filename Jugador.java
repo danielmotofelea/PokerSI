@@ -113,7 +113,7 @@ public class Jugador {
     }
 
     public void setIdentificacion(int[] identificacion) {
-        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length)
+        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length);
     }
 
     public void setFitness(float valor){
@@ -217,7 +217,7 @@ public class Jugador {
         int valorColor = 0;
         int valorPoker = 0;
 
-        double mejorMano = new double[2]; /** Se usará como retorno de la función*/
+        double [] mejorMano = new double[2]; /** Se usará como retorno de la función*/
         // int resul = 1;            /** Valor por defecto, dado que si no tenemos ninguna de las manos anteriores, tendremos carta alta*/
 
         for(int i=0; i<13; i++)
@@ -2293,10 +2293,10 @@ public class Jugador {
          * Utilizaremos un HashMap para guardar las reglas y poder mostrarlas por pantalla de una forma sencilla
          */
         HashMap<String, RuleBlock> ruleBlockHashMap = new HashMap<String, RuleBlock>();
-        ruleBlocksHashMap.put(ruleBlock.getName(), ruleBlock);
-        fb.setRuleBlocks(ruleBlocksHashMap);
+        ruleBlockHashMap.put(ruleBlock.getName(), ruleBlock);
+        fb.setRuleBlocks(ruleBlockHashMap);
 
-        pruebaBorroso(ruleBlocksMap); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
+        pruebaBorroso(ruleBlockHashMap); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
 
         /**
          * TODO especificar donde se van a guardar los valores de grado de soporte y peso de las reglas, etc
@@ -2323,7 +2323,7 @@ public class Jugador {
                  apuesta = 1; //Se iguala la apuesta mínima
              }
              else{
-                    apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*(ciegaGrande + gen[11]);
+                    apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*(ciegaGrande + (int) gen[11]);
                     /**
                      *  En caso de subir, el valor entero obtenido en el borroso se entenderá como la cantidad de
                      *  ciegas grandes que se añaden a la apuesta mínima. A ello se le añade además la cantidad de ciegas
