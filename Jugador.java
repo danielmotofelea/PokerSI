@@ -1952,7 +1952,24 @@ public class Jugador {
         return ponderacion;
     }
 
-    public int tomarDecision(){    /** Tomare cada decision como un entero: 0 pasar/noIr, la cantidad a apostar en caso de igualar o subir*/
+    /**
+     * Todos los parametros se pasan desde mesa, que es donde se hará la llamada a esta función.
+     * @param apuestaMinima : valor de la apuesta mínima. No siempre será igual a la ciega grande.
+     * @param apuestaMaxima : Valor del bote, para controlar que el valor devuelto no la supera
+     * @param ciegaGrande : valor de la ciega grande, se utilizará cuando se decida subir la apuesta
+     * @param mediaPocas : media muestral para definición de variable gaussiana
+     * @param mediaMedias : "
+     * @param mediaMuchas : "
+     * @param desvPocas : desviación típica para definición de variable gaussiana
+     * @param desvMedias
+     * @param desvMuchas
+     * @return (número entero): 0 pasar/noIr; 1 igualar; (cantidad a apostar) subir
+     *
+     * La mesa se encargará de controlar si el jugador pasa o no puede, y por tanto se va.
+     */
+    public int tomarDecision(int apuestaMinima, int apuestaMaxima, int ciegaGrande, double mediaPocas, double mediaMedias, double mediaMuchas, double desvPocas, double desvMedias, double desvMuchas){
+
+        int apuesta; //Se usará como return
 
         /** Una buena opcion es crear un arraylist y añadir las cartas actuales y mandarlo al borroso para
          ver que podemos hacer con la mejor mano que tenemos*/
@@ -2060,7 +2077,7 @@ public class Jugador {
             la parte entera del valor que devuelva la defuzzyficacion:
             Pasar/NoIr: 0 a 1
             Igualar: 0.5 a 2 (iguala la apuesta mínima)
-            Apostar: 1 a 10.
+            Apostar: 1 a ¿10?.
 
             Ejemplos:
                         -si obtenemos un valor de 0'6, se considerará pasar/noIr o igualar en función de las reglas
@@ -2085,7 +2102,8 @@ public class Jugador {
         Value igY[] = { new Value(0), new Value(1), new Value(0) };
         MembershipFunction mIgualar = new MembershipFunctionPieceWiseLinear(igX, igY);
 
-        Value subX[] = { new Value(1), new Value(2), new Value(10) }; //Habrá que ver si 10 se deja como máximo o no
+        subidaMaxima = (apuestaMaxima - apuestaMinima) / ciegaGrande;
+        Value subX[] = { new Value(1), new Value(2), new Value(subidaMaxima) };
         Value subY[] = { new Value(0), new Value(1), new Value(1) };
         MembershipFunction mSubir = new MembershipFunctionPieceWiseLinear(subX, subY);
 
@@ -2289,12 +2307,41 @@ public class Jugador {
         fis.evaluate();
 
         /**
-         * TODO especificar cada cuantas generaciones (atributo numGeneracion de Main) hay que guardar en fichero el output del fis
+         * Comprobamos la decisión que se va a tomar.
+         * En principio, no se tendrá en cuenta el punto de corte entre pasar/noIr e igualar ya que, aunque no hay dos reglas
+         * que mediante sus pesos lo puedan limitar, es muy improbable que se de el caso del punto de corte, debido a que estamos
+         * trabajando con bastante precision (double)
          */
 
+        if(fis.getVariable("decision").getMembership("pasar/noIr") > fis.getVariable("decision").getMembership("igualar")) //Si es mayor que igualar, es mayor que subir
+        {
+            apuesta = 0; //Si pasa o se va se controla en mesa
+        }
+        else if (fis.getVariable("decision").getMembership("igualar") > fis.getVariable("decision").getMembership("subir"))
+             {
+                 apuesta = 1; //Se iguala la apuesta mínima
+             }
+             else{
+                    apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*(ciegaGrande + gen[11]);
+                    /**
+                     *  En caso de subir, el valor entero obtenido en el borroso se entenderá como la cantidad de
+                     *  ciegas grandes que se añaden a la apuesta mínima. A ello se le añade además la cantidad de ciegas
+                     *  que se sube debido a la agresividad del jugador.
+                     *
+                     *  Aún está por ver si se mantiene la agresividad o con el valor del controlador es suficiente. En caso de
+                     *  eliminarse la agresividad, podrá eliminarse el siguiente if, pues en el controlador ya se limita el valor máximo
+                     *  posible para las subidas.
+                      */
+                     if(apuesta > apuestaMaxima) //El valor devuelto es superior al que aceptará la mesa
+                         apuesta = apuestaMaxima; //Si no se usa agresividad, se debe borrar.
+             }
+
         /**
-         * TODO establecer return
+         * TODO especificar cada cuantas generaciones (this.identificacion[0]) hay que guardar en fichero el output del fis
          */
+
+        return apuesta;
+
     }
 
     /**
