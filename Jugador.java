@@ -2,10 +2,8 @@ package pokerSI;
 
 import net.sourceforge.jFuzzyLogic.FIS;
 import net.sourceforge.jFuzzyLogic.FunctionBlock;
-import net.sourceforge.jFuzzyLogic.membership.MembershipFunction;
-import net.sourceforge.jFuzzyLogic.membership.MembershipFunctionGaussian;
-import net.sourceforge.jFuzzyLogic.membership.MembershipFunctionSingleton;
-import net.sourceforge.jFuzzyLogic.membership.Value;
+import net.sourceforge.jFuzzyLogic.defuzzifier.DefuzzifierCenterOfGravity;
+import net.sourceforge.jFuzzyLogic.membership.*;
 import net.sourceforge.jFuzzyLogic.rule.*;
 import net.sourceforge.jFuzzyLogic.ruleAccumulationMethod.RuleAccumulationMethodMax;
 import net.sourceforge.jFuzzyLogic.ruleActivationMethod.RuleActivationMethodMin;
@@ -23,13 +21,13 @@ public class Jugador {
     private int manosGanadas;
     private int manosJugadas;
     private double []gen; /** Posiciones 0 a 10: pesos de reglas, posicion 11: agresividad */
+    private double [] mejorMano; /** Se usará como retorno de la función*/
 
     private int valorMano;
     private float fitness;
     private int []identificacion;
     private Carta []cartasEnMano;
     private ArrayList<Carta> cartasComunes;
-    private ArrayList<Carta> mejorMano;
 
     public Jugador(){       /** Constructor del pokerSI.Jugador sin parametros */
         this.fichas = 1000;
@@ -43,17 +41,15 @@ public class Jugador {
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
         this.cartasEnMano = new Carta[2] ;             /** Las dos cartas en mano las tomamos como enteros*/
         this.cartasComunes = new ArrayList<Carta>();   /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
-        this.mejorMano = new ArrayList<Carta>();       /** La mejor combinacion de cartas sobre la mesa*/
-
+        this.mejorMano = new double[2];                /** Guarda en la primera posicion el valorMano y en la segunda la ponderacion*/
         for(int i=0; i<3; i++)
             this.identificacion[i] = 0;
-        for(int j=0; j<3; j++)
+        for(int j=0; j<2; j++)
             this.cartasEnMano[j] = new Carta();
         for(int k=0; k<10; k++)
             this.gen[k] = 0.0;
 
         this.cartasComunes = new ArrayList<Carta>();
-        this.mejorMano = new ArrayList<Carta>();
     }
 
     /** Al tratarse de atributos privados se necesitan metodos para acceder a las variables
@@ -123,7 +119,7 @@ public class Jugador {
         return fitness;
     }
 
-    public ArrayList<Carta> getMejorMano() {
+    public double []getMejorMano() {
         return mejorMano;
     }
 
@@ -149,33 +145,18 @@ public class Jugador {
         return fitness;
     }
 
-    public ArrayList<Carta> verMejorMano(){
+    /** Devuelve dos valores:
+     *
+     *            1 que sea el tipo de mano(sin especificar),
+     *            2 que sea la ponderacion(llamando al metodo de ponderacion)*/
 
-        int k;
-        int posMejorCarta1 = 0;         /** Estos dos valores son para indicar la posicion de la mejor carta en cada caso*/
-        int posMejorCarta2 = 0;         /** El segundo valor solo se utilizara en caso de doble pareja o full
-                                        tambien podria usarse para indicar la carta mas alta y mas baja de una escalera*/
-        int []numCarta = new int[13];
+    public double [] calcularMejorMano(){
 
         ArrayList<Carta> manoProvisional = new ArrayList<Carta>();    /** Array creado para añadir las 7 cartas al borroso y que devuelva la mejor mano*/
         for(int i=0; i<2; i++)
             manoProvisional.add(cartasEnMano[i]);        /** Se añaden las cartas que se tenga actualmente en un arraylist unificado*/
         for(int j=0; j<cartasComunes.size(); j++)                           /** Para pasarselo a otro metodo y que evalue la mejor mano*/
             manoProvisional.add(cartasComunes.get(j));
-
-        /** Ya tenemos el valor de nuestra mejor mano pero para apostar debemos hacer una consulta al sistema borroso
-         *  y tomar una decision, de si apostar, pasar o irse, todo esto dependiendo de los jugadores que haya aun en la mesa
-         *  cuantas fichas tengamos y sobre todo nuestra mano */
-
-        return mejorMano;
-    }
-
-    /** Creo que seria bueno que devuelva dos valores:
-     *
-     *                   1 que sea el tipo de mano(sin especificar),
-     *                   2 que sea la ponderacion(llamando al metodo de ponderacion)*/
-
-    public double [] calcularMejorMano(ArrayList<Carta> manoProvisional){
 
         int numCartas = manoProvisional.size();
 
@@ -194,10 +175,6 @@ public class Jugador {
         boolean pic = false;
         boolean treb = false;
         boolean diam = false;
-        boolean escDia = false;
-        boolean escCor = false;
-        boolean escPic = false;
-        boolean escTreb = false;
 
         int contCorazones = 0;        /** Son los contadores para tener el recuento de las veces que se repite un determinado palo*/
         int contPicas = 0;
@@ -217,7 +194,6 @@ public class Jugador {
         int valorColor = 0;
         int valorPoker = 0;
 
-        double [] mejorMano = new double[2]; /** Se usará como retorno de la función*/
         // int resul = 1;            /** Valor por defecto, dado que si no tenemos ninguna de las manos anteriores, tendremos carta alta*/
 
         for(int i=0; i<13; i++)
@@ -358,19 +334,7 @@ public class Jugador {
 
         if (escalera && color){
             escaleraColor = true;
-            if(cor)
-                escCor = true;
-
-                else if(treb)
-                    escTreb = true;
-
-                    else if(diam)
-                        escDia = true;
-
-                        else if(pic)
-                            escPic = true;
         }
-
 
         /** Ahora habra que devolver la mejor mano */
 
@@ -412,8 +376,12 @@ public class Jugador {
 
         mejorMano[0] = (double) this.valorMano;
 
-        mejorMano[1] = ponderarMano(escPic, escCor, escDia, escTreb, cor, pic, treb, diam, valorPareja1, valorPareja2,
+        mejorMano[1] = ponderarMano(cor, pic, treb, diam, valorPareja1, valorPareja2,
                 valorPoker, valorTrio, valorFull,valorColor, valorEscaleraInicio, valorEscaleraFinal);
+
+        /** Ya tenemos el valor de nuestra mejor mano pero para apostar debemos hacer una consulta al sistema borroso
+         *  y tomar una decision, de si apostar, pasar o irse, todo esto dependiendo de los jugadores que haya aun en la mesa
+         *  cuantas fichas tengamos y sobre todo nuestra mano */
 
         return mejorMano;
     }
@@ -422,11 +390,10 @@ public class Jugador {
      * comparamos el valor que nos devuelve el metodo anterior (calcularMejorMano)
      *
      * NOTA: No sería mejor tener un atributo que guarde el valor de la mejor mano para no tener que volver a llamar al metodo
-     *       y asi evitar calcular de nuevo la mejor mano. (añadido, si no, resulta util buscar otra forma)*/
+     *       y asi evitar calcular de nuevo la mejor mano. (añadido, si no resulta util, buscar otra forma)*/
 
 
-    public double ponderarMano(boolean escPic, boolean escCor, boolean escDia,boolean escTreb,
-                            boolean cor, boolean pic, boolean treb, boolean diam, int valorPareja1, int valorPareja2,
+    public double ponderarMano(boolean cor, boolean pic, boolean treb, boolean diam, int valorPareja1, int valorPareja2,
                             int valorPoker, int valorTrio, int []valorFull,int valorColor, int valorEscaleraInicio, int valorEscaleraFinal){
 
         double ponderacion = 0;
@@ -461,10 +428,6 @@ public class Jugador {
         boolean picComun = false;
         boolean trebComun = false;
         boolean diamComun = false;
-        boolean escDiaComun = false;
-        boolean escCorComun = false;
-        boolean escPicComun = false;
-        boolean escTrebComun = false;
 
         int contCorazonesComun = 0;        /** Son los contadores para tener el recuento de las veces que se repite un determinado palo*/
         int contPicasComun = 0;
@@ -627,17 +590,6 @@ public class Jugador {
 
         if (escaleraComun && colorComun){
             escaleraColorComun = true;
-            if(corComun)
-                escCorComun = true;
-
-            else if(trebComun)
-                escTrebComun = true;
-
-            else if(diamComun)
-                escDiaComun = true;
-
-            else if(picComun)
-                escPicComun = true;
         }
 
 
@@ -1021,31 +973,31 @@ public class Jugador {
                      *                                Color como mejor mano
                      *                                y todas las combinaciones posibles en mesa */
                     if (valorManoComun == 1){
-                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano);
+                        ponderacion = (carAlta * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano);
                     }
 
                     else if (valorManoComun == 2){
-                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                        ponderacion = (carAlta * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                                 (valorPareja1Comun * valorPareja1Comun * valorManoComun);
                     }
 
                     else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
-                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                        ponderacion = (carAlta * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                                 (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
                     }
 
                     else if (valorManoComun == 4){
-                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                        ponderacion = (carAlta * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                                 (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
                     }
 
                     else if (valorManoComun == 5) { /** Escalera --> mesa*/
-                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                        ponderacion = (carAlta * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                                 ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
                     }
 
                     else if (valorManoComun == 6) { /** Color --> mesa*/
-                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                        ponderacion = (carAlta * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                                 (valorColorComun * valorColorComun * valorColorComun * valorColorComun * valorColorComun * valorManoComun);
                         //Podría usarse Math.pow() en lugar de multiplicar 5 veces valorColorComun, pero quizá tardaría más en calcularse
 
@@ -1060,12 +1012,12 @@ public class Jugador {
                     }
 
                     else if (valorManoComun == 7) { /** Full --> mesa*/
-                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                        ponderacion = (carAlta * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                                 (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
                     }
 
                     else if (valorManoComun == 8) { /** Poker --> mesa*/
-                        ponderacion = (carAlta *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                        ponderacion = (carAlta * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                                 (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
                     }
 
@@ -1130,7 +1082,7 @@ public class Jugador {
 
                     else if (valorManoComun == 7) { /** Full --> mesa*/
                         ponderacion = (carAlta * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
-                                (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                                (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
                     }
 
                     else if (valorManoComun == 8) { /** Poker --> mesa*/
@@ -1199,7 +1151,7 @@ public class Jugador {
 
                     else if (valorManoComun == 7) { /** Full --> mesa*/
                         ponderacion = (carAlta * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
-                                (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                                (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
                     }
 
                     else if (valorManoComun == 8) { /** Poker --> mesa*/
@@ -1308,7 +1260,7 @@ public class Jugador {
 
                     else if (valorManoComun == 7) { /** Full --> mesa*/
                         ponderacion = (carAlta * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
-                                (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                                (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
                         if (cor)
                             ponderacion = ponderacion + 4;
                         else if (pic)
@@ -1621,31 +1573,31 @@ public class Jugador {
                  *                                Color como mejor mano
                  *                                y todas las combinaciones posibles en mesa */
                 if (valorManoComun == 1){
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano);
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano);
                 }
 
                 else if (valorManoComun == 2){
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                             (valorPareja1Comun * valorPareja1Comun * valorManoComun);
                 }
 
                 else if (valorManoComun == 3) { /** Doble Pareja --> mesa*/
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                             (valorPareja1Comun * valorPareja1Comun * valorPareja2Comun * valorPareja2Comun * valorManoComun);
                 }
 
                 else if (valorManoComun == 4){
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                             (valorTrioComun * valorTrioComun * valorTrioComun * valorManoComun);
                 }
 
                 else if (valorManoComun == 5) { /** Escalera --> mesa*/
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                             ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
                 }
 
                 else if (valorManoComun == 6) { /** Color --> mesa*/
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                             (valorColorComun * valorColorComun * valorColorComun * valorColorComun * valorColorComun * valorManoComun);
                     //Podría usarse Math.pow() en lugar de multiplicar 5 veces valorColorComun, pero quizá tardaría más en calcularse
 
@@ -1660,17 +1612,17 @@ public class Jugador {
                 }
 
                 else if (valorManoComun == 7) { /** Full --> mesa*/
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                             (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
                 }
 
                 else if (valorManoComun == 8) { /** Poker --> mesa*/
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                             (valorPokerComun * valorPokerComun * valorPokerComun * valorPokerComun * valorManoComun);
                 }
 
                 else{ /** Escalera color --> mesa*/
-                    ponderacion = (parMano * parMano * 2 *(valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
+                    ponderacion = (parMano * parMano * 2 * valorColor * valorColor * valorColor * valorColor * valorColor * valorMano) /
                             ((valorEscaleraInicioComun + (valorEscaleraInicioComun + 1) + (valorEscaleraInicioComun + 2) + (valorEscaleraInicioComun + 3) + valorEscaleraFinalComun) * valorManoComun);
 
                     if (corComun)
@@ -1730,7 +1682,7 @@ public class Jugador {
 
                 else if (valorManoComun == 7) { /** Full --> mesa*/
                     ponderacion = (parMano * parMano * 2 * valorFull[0] * valorFull[0] * valorFull[1] * valorFull[1] * valorMano) /
-                            (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                            (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
                 }
 
                 else if (valorManoComun == 8) { /** Poker --> mesa*/
@@ -1799,7 +1751,7 @@ public class Jugador {
 
                 else if (valorManoComun == 7) { /** Full --> mesa*/
                     ponderacion = (parMano * parMano * 2 * valorPoker * valorPoker * valorPoker * valorPoker * valorMano) /
-                            (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                            (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
                 }
 
                 else if (valorManoComun == 8) { /** Poker --> mesa*/
@@ -1908,7 +1860,7 @@ public class Jugador {
 
                 else if (valorManoComun == 7) { /** Full --> mesa*/
                     ponderacion = (parMano * parMano * 2 * (valorEscaleraInicio + (valorEscaleraInicio + 1) + (valorEscaleraInicio + 2) + (valorEscaleraInicio + 3) + valorEscaleraFinal) * valorMano) /
-                            (valorPareja1Comun * valorPareja1Comun * valorTrioComun * valorTrioComun * valorManoComun);
+                            (valorFullComun[0] * valorFullComun[0] * valorFullComun[1] * valorFullComun[1] * valorFullComun[1] * valorManoComun);
                     if (cor)
                         ponderacion = ponderacion + 4;
                     else if (pic)
