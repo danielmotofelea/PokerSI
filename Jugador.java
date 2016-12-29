@@ -1969,6 +1969,7 @@ public class Jugador {
      */
     public int tomarDecision(int apuestaMinima, int apuestaMaxima, int ciegaGrande, double mediaPocas, double mediaMedias, double mediaMuchas, double desvPocas, double desvMedias, double desvMuchas){
 
+        int subidaMaxima;
         int apuesta; //Se usará como return
 
         /** Una buena opcion es crear un arraylist y añadir las cartas actuales y mandarlo al borroso para
