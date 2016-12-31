@@ -7,27 +7,11 @@ import java.util.Random;
 
 public class Main {
 
-    /*
-    *   generarJugador deberá recibir los jugadores de la mesa final
-    *   del torneo anterior y utilizar los valores de sus "genes" para
-    *   realizar mutaciones y generar jugadores nuevos.
-    *
-    *   Se tomaran los atributos de un jugador elegido aleatoriamente
-    *   entre los que forman parte de la mesa final.
-    *
-    *   El jugador generado se devolverá a la funcion main para introducirlo
-    *   en generacion, encargandose dicha funcion de gestionar todo el proceso
-    *   de generacion de jugadores, llamando 56 veces a esta funcion.
-    *   Los 8 jugadores restantes se obtienen de la mesa final (atributo en clase Torneo)
-    *   y por tanto no es necesario generarlos
-    *
-    * */
-
     /**
      * generarJugador servirá para los jugadores de la primera generacion
      * @return Jugador
      */
-    public static  Jugador generarJugador()
+    public static Jugador generarJugador()
     {
         Jugador j = new Jugador();
         Random rand = new Random(); //rand.nextDouble() devuelve numero entre 0 y 1, para gen.
@@ -42,16 +26,15 @@ public class Main {
         return j;
     }
 
-
     /**
-     * generarJugadores generará los jugadores de las generaciones 2 a n,
+     * generarJugadores generará, de dos en dos, los jugadores de las generaciones 2 a n,
      * mutando y emparejando los valores del gen cuando proceda
      * @param numGeneracion
      * @param posicion : posicion de referencia para insertar los jugadores en generacion
      * @param generacion
      * @param finalistas
      */
-    public static void generarJugadores(int numGeneracion, int posicion,ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
+    public static void generarJugadores(int numGeneracion, int posicion, ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
     {
         Jugador nuevoJugador1 = new Jugador();
         Jugador nuevoJugador2 = new Jugador();
@@ -68,22 +51,64 @@ public class Main {
          * una probabilidad de mutación muy baja (0.001) y una probabilidad de emparejamiento alta (0.6).
          *
          * Esta alta probabilidad de emparejamiento garantizará que no hay muchos individuos con el mismo comportamiento.
+         *
+         * Si no toca emparejar, se copiaran dos finalistas integramente y despues se valorara la mutacion
          */
 
-        if(rand.nextDouble() < 0.6) //Emparejamos
-        {
-            //En primer lugar, elegimos dos de los finalistas
-            /*
-                TODO cambiar la seleccion para que sea más probable seleccionar a los de mejor fitness
-             */
-            int i1, i2;
-            i1 = rand.nextInt(9); //Número aleatorio entre 0 y 8
-            do{
-                i2 = rand.nextInt(9);
-            }while (i2 == i1); //Garantizamos que no se elige dos veces al mismo jugador
 
-            Jugador f1 = finalistas.get(i1);
-            Jugador f2 = finalistas.get(i2);
+        if(rand.nextDouble() < 0.6){ //Emparejamos
+
+            /*
+                En primer lugar, elegimos dos de los finalistas, teniendo más probabilidad cuanto mayor sea su fitness->
+                -> [4,5%, 5,5%, 6,5%, 8,5%, 10%, 15%, 20%, 30%]
+             */
+
+            double prob;
+            int i1 = 8; //Le damos un valor imposible para evitar warning, en la primera iteracion se le dara un valor correcto
+            int i2; //i1 e i2 serviran para controlar que no sacamos dos veces el mismo jugador
+            Jugador f1 = new Jugador();
+            Jugador f2 = new Jugador();
+
+            for (int i = 0; i < 2; i++) { //se hace lo mismo para los dos jugadores
+
+                prob = rand.nextDouble();
+
+                if(prob < 0.045){ //4.5%
+                    i2 = 0;
+                }
+                else if(prob < 0.1) { //5.5% (+ el anterior)
+                    i2 = 1;
+                }
+                else if(prob < 0.165){ //6.5% (+ anteriores)
+                    i2 = 2;
+                }
+                else if(prob < 0.25){ //8.5%
+                    i2 = 3;
+                }
+                else if(prob < 0.35) { //10%
+                    i2 = 4;
+                }
+                else if(prob < 0.5){ //15%
+                    i2 = 5;
+                }
+                else if(prob < 0.7){ //20%
+                    i2 = 6;
+                }
+                else{ //30%
+                    i2 = 7;
+                }
+
+                if(i < 1) {//primera iteracion
+                    i1 = i2;
+                    f1 = finalistas.get(i1);
+                }
+                else if(i1 == i2) {
+                    i--; //sera necesario volver a iterar, pues ha salido dos veces el mismo jugador
+                }
+                else{ //Segunda iteracion y hemos obtenido dos indices distintos
+                    f2 = finalistas.get(i2);
+                }
+            }
 
             /*
                 Una vez elegidos los finalistas, elegimos a partir de que índice del gen vamos a emparejar.
@@ -99,7 +124,8 @@ public class Main {
                 Ejemplo: i2 = 6. nuevoGen[0] a nuevoGen[5] serán de f1, 6 a 11 de f2.
              */
 
-            i2 = rand.nextInt(nuevoJugador1.getGen().length);
+            i2 = rand.nextInt(nuevoJugador1.getGen().length); //i2 ahora se usara para controlar el indice de corte del gen
+
             if(i2 == nuevoJugador1.getGen().length - 1) // El corte es la ultima posición, se copia entero el gen del jugador f1
             {
                 nuevoGen1 = f1.getGen();
@@ -116,29 +142,76 @@ public class Main {
                 System.arraycopy(f1.getGen(), i2, nuevoGen2, i2, nuevoGen2.length);
 
             }
-        }else { //No toca emparejar, se copia directamente el gen de un finalista aleatorio (mas probabilidad cuanto mas fitness)
-                /*
-                    TODO definir la selección en función del fitness
-                 */
+        }
+        else{ //No toca emparejar, se copia directamente el gen de un finalista aleatorio (mas probabilidad cuanto mas fitness)
+
+            /*
+                Como no vamos a emparejar, puede salir dos veces el mismo jugador
+             */
+            double prob;
+            int i1;
+
+            for (int i = 0; i < 2; i++) { //se hace lo mismo para los dos jugadores
+
+                prob = rand.nextDouble();
+
+                if(prob < 0.045){ //4.5%
+                    i1 = 0;
+                }
+                else if(prob < 0.1) { //5.5% (+ el anterior)
+                    i1 = 1;
+                }
+                else if(prob < 0.165){ //6.5% (+ anteriores)
+                    i1 = 2;
+                }
+                else if(prob < 0.25){ //8.5%
+                    i1 = 3;
+                }
+                else if(prob < 0.35) { //10%
+                    i1 = 4;
+                }
+                else if(prob < 0.5){ //15%
+                    i1 = 5;
+                }
+                else if(prob < 0.7){ //20%
+                    i1 = 6;
+                }
+                else{ //30%
+                    i1 = 7;
+                }
+
+                if(i < 1) {//primera iteracion
+                    nuevoJugador1 = finalistas.get(i1);
+                }
+                else nuevoJugador2 = finalistas.get(i1);
+            }
         }
 
         /*
             Ahora pasamos a mirar, por cada posición del gen (ambos jugadores), si debe mutarse o no.
          */
-        for (int i = 0; i < nuevoJugador1.getGen().length; i++) {
-            if(rand.nextDouble() < 0.03){ //Mutamos
-                //Mutación de un +-10% como máximo
+        for (int j = 0; j < 2; j++) { //para cada jugador
 
-                /*
-                    nextInt((max - min) + 1) + min, siendo max = 10 y min = - 10
-                    Se divide entre 10 para dejarlo como digito decimal.
-                    Ejemplo: se genera aleatoriamente el valor 0 --> (0-10)/10 = -0.1 (por el cast)
-                                                                 --> 1.0 + (-0.1) = 0.9 (90%, reduccion del 10%)
-                 */
-                nuevoGen1[i] = nuevoGen1[i] * (1.0 + ((double)rand.nextInt(21) - 10)/10);
-                nuevoGen2[i] = nuevoGen2[i] * (1.0 + ((double)rand.nextInt(21) - 10)/10);
+            for (int i = 0; i < nuevoJugador1.getGen().length; i++) { //para cada posicion del gen
+
+                if(rand.nextDouble() < 0.03){ //Mutamos
+                    //Mutación de un +-10% como máximo
+
+                    /*
+                        nextInt((max - min) + 1) + min, siendo max = 10 y min = - 10
+                        Se divide entre 10 para dejarlo como digito decimal.
+                        Ejemplo: se genera aleatoriamente el valor 0 --> (0-10)/10 = -0.1 (por el cast)
+                                                                     --> 1.0 + (-0.1) = 0.9 (90%, reduccion del 10%)
+                     */
+
+                    if(j < 1) { //Toca mutar el nuevoGen1
+                        nuevoGen1[i] = nuevoGen1[i] * (1.0 + ((double) rand.nextInt(21) - 10) / 10);
+                    }
+                    else nuevoGen2[i] = nuevoGen2[i] * (1.0 + ((double)rand.nextInt(21) - 10) / 10);
+                }
             }
         }
+
 
         /*
             Tras haber mutado y/o emparejado como corresponda, se guardan los genes en sus respectivos jugadores
@@ -165,7 +238,7 @@ public class Main {
         //Los siguientes comentarios se utilizaran como guia para las funciones que se deben realizar
         /** Se crean los 8 jugadores predeterminados y se añaden a @generacion **/
 
-        /** Se crean, de forma aleatoria, los 56 jugadores restantes de la primera generacion y se añaden a @generacion **/
+        /** Se crean, de forma aleatoria e individual, los 56 jugadores restantes de la primera generacion y se añaden a @generacion **/
 
         for (int i = 8; i < 64; i++) {
             generacion.set(i, generarJugador());
@@ -192,6 +265,7 @@ public class Main {
             });
 
             generacion.clear(); //Los finalistas se han guardado, el resto desaparecen
+
             //Calculamos fitness, exportamos datos, metemos los finalistas en la nueva generación y los reiniciamos.
             for (int i = 0; i < 8; i++) {
                 finalistas.get(i).calcularFitness();
