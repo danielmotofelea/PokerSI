@@ -2094,7 +2094,7 @@ public class Jugador {
           */
 
         Rule rule1 = new Rule("Regla1", ruleBlock);
-        RuleTerm t1r1 = new RuleTerm(mano, "muyMala", false);
+        rule1.addAntecedent(mano, "muyMala", false);
         rule1.addConsequent(decision, "pasar/noIr", false);
         ruleBlock.add(rule1);
 
@@ -2103,7 +2103,7 @@ public class Jugador {
           */
 
         Rule rule2 = new Rule("Regla2", ruleBlock);
-        RuleTerm t1r2 = new RuleTerm(mano, "muyBuena", false);
+        rule2.addAntecedent(mano, "muyBuena", false);
         rule2.addConsequent(decision, "subir", false);
         ruleBlock.add(rule2);
 
