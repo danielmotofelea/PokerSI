@@ -7,6 +7,22 @@ import java.util.Random;
 
 public class Main {
 
+    /*
+    *   generarJugador deberá recibir los jugadores de la mesa final
+    *   del torneo anterior y utilizar los valores de sus "genes" para
+    *   realizar mutaciones y generar jugadores nuevos.
+    *
+    *   Se tomaran los atributos de un jugador elegido aleatoriamente
+    *   entre los que forman parte de la mesa final.
+    *
+    *   El jugador generado se devolverá a la funcion main para introducirlo
+    *   en generacion, encargandose dicha funcion de gestionar todo el proceso
+    *   de generacion de jugadores, llamando 56 veces a esta funcion.
+    *   Los 8 jugadores restantes se obtienen de la mesa final (atributo en clase Torneo)
+    *   y por tanto no es necesario generarlos
+    *
+    * */
+
     /**
      * generarJugador servirá para los jugadores de la primera generacion
      * @return Jugador
@@ -26,15 +42,16 @@ public class Main {
         return j;
     }
 
+
     /**
-     * generarJugadores generará, de dos en dos, los jugadores de las generaciones 2 a n,
+     * generarJugadores generará los jugadores de las generaciones 2 a n,
      * mutando y emparejando los valores del gen cuando proceda
      * @param numGeneracion
      * @param posicion : posicion de referencia para insertar los jugadores en generacion
      * @param generacion
      * @param finalistas
      */
-    public static void generarJugadores(int numGeneracion, int posicion, ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
+    public static void generarJugadores(int numGeneracion, int posicion,ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
     {
         Jugador nuevoJugador1 = new Jugador();
         Jugador nuevoJugador2 = new Jugador();
@@ -234,9 +251,53 @@ public class Main {
         ArrayList<Jugador> generacion = new ArrayList<Jugador>(64);         //ArrayList de jugadores, se pasa a clase Torneo
         ArrayList<Jugador> finalistas = new ArrayList<Jugador>(8);          //ArrayList con los finalistas del anterior torneo
         int numGeneracion = 1;                                              //Numero de la generación en la que nos encontramos
+        double [] genDefault = new double[12];
+        Torneo torneo;
+        Jugador jDefault = new Jugador();
 
-        //Los siguientes comentarios se utilizaran como guia para las funciones que se deben realizar
         /** Se crean los 8 jugadores predeterminados y se añaden a @generacion **/
+        /*
+            En primer lugar, creamos el gen que usarán los jugadores pasivos:
+                -Reglas que requieran subida: peso 0
+                -Reglas que requieran igualar : peso 0.5
+                -Reglas que requieran pasar/noIr: peso 0
+         */
+        genDefault[0] = 1.0;
+        genDefault[1] = 0.0;
+        genDefault[2] = 1.0;
+        genDefault[3] = 0.5;
+        genDefault[4] = 0.5;
+        genDefault[5] = 0.0;
+        genDefault[6] = 1.0;
+        genDefault[7] = 0.5;
+        genDefault[8] = 1.0;
+        genDefault[9] = 0.5;
+        genDefault[10] = 0.0;
+        genDefault[11] =  1.0; //TODO definir rango valores que puede tomar agresividad
+
+        jDefault.setGen(genDefault);
+
+        for (int i = 0; i < 8; i++) {
+            if (i == 4) //Pasamos de comportamiento pasivo a agresivo, cambia el gen
+            {
+                genDefault[0] = 0.0;
+                genDefault[1] = 1.0;
+                genDefault[2] = 0.0;
+                genDefault[3] = 0.5;
+                genDefault[4] = 0.5;
+                genDefault[5] = 1.0;
+                genDefault[6] = 0.0;
+                genDefault[7] = 0.5;
+                genDefault[8] = 0.0;
+                genDefault[9] = 0.5;
+                genDefault[10] = 1.0;
+                genDefault[11] =  1.0; //TODO definir rango valores que puede tomar agresividad
+
+                jDefault.setGen(genDefault);
+            }
+
+            generacion.set(i, jDefault);
+        }
 
         /** Se crean, de forma aleatoria e individual, los 56 jugadores restantes de la primera generacion y se añaden a @generacion **/
 
@@ -247,6 +308,9 @@ public class Main {
         do {
             /** Llamada al constructor Torneo(@generacion), para que distribuya a los jugadores por las mesas **/
 
+            torneo = new Torneo(generacion, numGeneracion);
+            finalistas.addAll(torneo.realizarTorneo()); //TODO se necesita que realizarTorneo retorne un ArrayList<Jugador>
+
             /** Una vez finaliza el torneo, deben devolverse los 8 finalistas para añadirlos a @finalistas
              *
              * A continuación, se calcula el fitness de cada uno de los finalistas (jugador.calcularFitness()) y se guardan las estadísticas como corresponda.
@@ -254,15 +318,6 @@ public class Main {
              * Despues, se procede a reiniciar las variables que influyen en el fitness en los finalistas, y a
              * la generacion de los jugadores restantes mediante mutación;
              * **/
-
-            /*
-             * Reordenamos los finalistas en función de su fitness, cuanto mayor sea su indice en el arraylist, mayor sera su fitness
-             */
-            Collections.sort(finalistas, new Comparator<Jugador>() {
-                public int compare(Jugador j1, Jugador j2) {
-                    return new Double(j1.getFitness()).compareTo(new Double(j2.getFitness()));
-                }
-            });
 
             generacion.clear(); //Los finalistas se han guardado, el resto desaparecen
 
@@ -279,12 +334,30 @@ public class Main {
 
             numGeneracion++; /** declarado aquí por si hay que exportar numGeneracion a fichero en el bucle anterior*/
 
+            /*
+             *  Reordenamos los finalistas en función de su fitness, cuanto mayor sea su indice en el arraylist, mayor sera su fitness
+              * No importa que la lista de finalistas se reordene después de haberlos añadido a la nueva generacion,
+              * pues no importa a que mesa va cada uno
+             */
+            Collections.sort(finalistas, new Comparator<Jugador>() {
+                public int compare(Jugador j1, Jugador j2) {
+                    return new Double(j1.getFitness()).compareTo(new Double(j2.getFitness()));
+                }
+            });
+
+
             for (int i = 8; i < 64; i+=2) {
                 generarJugadores(numGeneracion, i, generacion, finalistas);//Generamos 2 jugadores cada vez, y los añadimos a generacion
             }
 
             //Ya se han generado todos los jugadores, luego se puede limpiar finalistas
             finalistas.clear();
+
+            /*
+                Limpiamos memoria antes de volver a iniciar el bucle
+             */
+            Runtime garbage = Runtime.getRuntime();
+            garbage.gc();
 
         }while(numGeneracion < 100); /** Se debe decidir esta condicion de terminacion, si se hace por tecla o por numGeneraciones*/
     }
