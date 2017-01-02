@@ -7,7 +7,7 @@ import java.util.*;
  * Created by Javi on 09/12/2016.
  */
 public class Torneo {
-    protected ArrayList<Jugador> finalistas;
+    private ArrayList<Jugador> finalistas;
     private ArrayList<Jugador> participantes;
     private int idGen;
 
@@ -33,7 +33,7 @@ public class Torneo {
      * Esto se repite 8 veces en total
      * Finalmente se jugaría la mesa final para actualizar los fitness
      */
-    public void realizarTorneo() {
+    public ArrayList<Jugador> realizarTorneo() {
         Mesa m;
         ArrayList<Jugador> jugadoresMesa = new ArrayList<Jugador>();
         int posOtrosJug=8; //Guardara la posicion donde empezara a coger los jugadores no finalistas para la siguiente mesa
@@ -48,6 +48,7 @@ public class Torneo {
         }
         m=new Mesa(finalistas,idGen);//Constructor mesa: Mesa(Jugadores, idGen);
         m.jugarMesaFinal();
+        return finalistas;
     }
 
 }
