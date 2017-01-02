@@ -24,7 +24,7 @@ public class Jugador {
     private double [] mejorMano; /** Se usará como retorno de la función*/
 
     private int valorMano;
-    private float fitness;
+    private double fitness;
     private int []identificacion;
     private Carta []cartasEnMano;
     private ArrayList<Carta> cartasComunes;
@@ -112,10 +112,10 @@ public class Jugador {
         System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length);
     }
 
-    public void setFitness(float valor){
+    public void setFitness(double valor){
         fitness = valor;
     }
-    public float getFitness(){
+    public double getFitness(){
         return fitness;
     }
 
@@ -130,16 +130,18 @@ public class Jugador {
         this.manosGanadas = 0;
         this.manosJugadas = 0;
         this.fitness = 0;
+        this.cartasEnMano = new Carta[2];
+        this.cartasComunes.clear();
     }
 
     /** Esta funcion unicamente se invoca cuando haya finalizado la partida ya sea en la mesa inicial o en el mesa final
      *  por lo tanto se calculara unicamente 2 veces por partida en el caso de los jugadores de la mesa final
      *  y con el valor fitness ver la evolucion de la grafica de aprendizaje que elabora la clase MAIN */
 
-    public float calcularFitness(){
+    public double calcularFitness(){
 
         if((manosJugadas != 0) && (fichasApostadas != 0))
-            fitness = ((manosGanadas/manosJugadas)*(fichasGanadas/fichasApostadas))/100;
+            fitness =  (manosGanadas/manosJugadas)*(fichasGanadas/(7*fichasApostadas)) / 100.0 ; //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
         else
             fitness = 0;
         return fitness;
