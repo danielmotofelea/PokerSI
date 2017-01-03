@@ -37,7 +37,7 @@ public class Jugador {
         this.manosJugadas = 0;
         this.fitness = 0;
         this.valorMano = 1;
-        this.gen = new double[12];                     /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
+        this.gen = new double[11];                     /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
         this.cartasEnMano = new Carta[2] ;             /** Las dos cartas en mano las tomamos como enteros*/
         this.cartasComunes = new ArrayList<Carta>();   /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
@@ -46,7 +46,7 @@ public class Jugador {
             this.identificacion[i] = 0;
         for(int j=0; j<2; j++)
             this.cartasEnMano[j] = new Carta();
-        for(int k=0; k<10; k++)
+        for(int k=0; k < gen.length; k++)
             this.gen[k] = 0.0;
 
         this.cartasComunes = new ArrayList<Carta>();
@@ -2224,7 +2224,7 @@ public class Jugador {
         ruleBlock.add(rule11);
 
         /*
-         * Los pesos se obtienen de las 11 primeras posiciones de gen
+         * Los pesos se obtienen del gen
          */
         rule1.setWeight(gen[0]);
         rule2.setWeight(gen[1]);
@@ -2247,7 +2247,7 @@ public class Jugador {
         /**
          * Utilizaremos un HashMap para guardar las reglas y poder mostrarlas por pantalla de una forma sencilla
          */
-        HashMap<String, RuleBlock> ruleBlockHashMap = new HashMap<String, RuleBlock>();
+        HashMap<String, RuleBlock> ruleBlockHashMap = new HashMap<>();
         ruleBlockHashMap.put(ruleBlock.getName(), ruleBlock);
         fb.setRuleBlocks(ruleBlockHashMap);
 
@@ -2278,18 +2278,12 @@ public class Jugador {
                  apuesta = 1; //Se iguala la apuesta mínima
              }
              else{
-                    apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*(ciegaGrande + (int) gen[11]);
+                    apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*ciegaGrande;
                     /**
                      *  En caso de subir, el valor entero obtenido en el borroso se entenderá como la cantidad de
                      *  ciegas grandes que se añaden a la apuesta mínima. A ello se le añade además la cantidad de ciegas
                      *  que se sube debido a la agresividad del jugador.
-                     *
-                     *  Aún está por ver si se mantiene la agresividad o con el valor del controlador es suficiente. En caso de
-                     *  eliminarse la agresividad, podrá eliminarse el siguiente if, pues en el controlador ya se limita el valor máximo
-                     *  posible para las subidas.
                       */
-                     if(apuesta > apuestaMaxima) //El valor devuelto es superior al que aceptará la mesa
-                         apuesta = apuestaMaxima; //Si no se usa agresividad, se debe borrar.
              }
 
         /**
