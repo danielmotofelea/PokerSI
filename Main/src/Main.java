@@ -12,14 +12,10 @@ public class Main {
     *   del torneo anterior y utilizar los valores de sus "genes" para
     *   realizar mutaciones y generar jugadores nuevos.
     *
-    *   Se tomaran los atributos de un jugador elegido aleatoriamente
-    *   entre los que forman parte de la mesa final.
-    *
     *   El jugador generado se devolverá a la funcion main para introducirlo
-    *   en generacion, encargandose dicha funcion de gestionar todo el proceso
-    *   de generacion de jugadores, llamando 56 veces a esta funcion.
-    *   Los 8 jugadores restantes se obtienen de la mesa final (atributo en clase Torneo)
-    *   y por tanto no es necesario generarlos
+    *   en generacion, encargandose dicha funcion de gestionar el proceso
+    *   de generacion de jugadores.
+    *   Los 8 jugadores de la mesa final se conservan para la generacion siguiente por elitismo.
     *
     * */
 
@@ -62,9 +58,9 @@ public class Main {
         nuevoJugador2.setIdentificacion(new int[]{numGeneracion, 0, 0});
 
         /**
-         * Para annadir la mayor diversidad posible recurriremos tanto a la mutación como al emparejamiento
+         * Para annadir la mayor diversidad posible recurriremos tanto a la mutación como a la recombinacion
          *
-         * Debido a que usamos un único cromosoma y una población de entre 50 y 100 individuos (64), utilizaremos
+         * Debido a que usamos un unico gen y una población de entre 50 y 100 individuos (64), utilizaremos
          * una probabilidad de mutación muy baja (0.001) y una probabilidad de emparejamiento alta (0.6).
          *
          * Esta alta probabilidad de emparejamiento garantizará que no hay muchos individuos con el mismo comportamiento.
@@ -73,7 +69,7 @@ public class Main {
          */
 
 
-        if(rand.nextDouble() < 0.6){ //Emparejamos
+        if(rand.nextDouble() < 0.6){ //Recombinamos
 
             /*
                 En primer lugar, elegimos dos de los finalistas, teniendo más probabilidad cuanto mayor sea su fitness->
@@ -93,7 +89,7 @@ public class Main {
                 if(prob < 0.045){ //4.5%
                     i2 = 0;
                 }
-                else if(prob < 0.1) { //5.5% (+ el anterior)
+                else if(prob < 0.1){ //5.5% (+ el anterior)
                     i2 = 1;
                 }
                 else if(prob < 0.165){ //6.5% (+ anteriores)
@@ -102,7 +98,7 @@ public class Main {
                 else if(prob < 0.25){ //8.5%
                     i2 = 3;
                 }
-                else if(prob < 0.35) { //10%
+                else if(prob < 0.35){ //10%
                     i2 = 4;
                 }
                 else if(prob < 0.5){ //15%
@@ -119,7 +115,7 @@ public class Main {
                     i1 = i2;
                     f1 = finalistas.get(i1);
                 }
-                else if(i1 == i2) {
+                else if(i1 == i2){
                     i--; //sera necesario volver a iterar, pues ha salido dos veces el mismo jugador
                 }
                 else{ //Segunda iteracion y hemos obtenido dos indices distintos
@@ -128,8 +124,8 @@ public class Main {
             }
 
             /*
-                Una vez elegidos los finalistas, elegimos a partir de que índice del gen vamos a emparejar.
-                Hay que recordar que el proceso de emparejamiento genera 2 individuos.
+                Una vez elegidos los finalistas, elegimos a partir de que índice del gen vamos a recombinar.
+                Hay que recordar que el proceso de recombinación genera 2 individuos.
 
                 En nuevoJugador1, de 0 a i2 se copia de f1, de i2+1 hasta el final se copia de f2.
                 En nuevoJugador2 las posiciones restantes, primero de f2 y luego de f1.
@@ -151,19 +147,20 @@ public class Main {
             else{
                 //Para nuevoJugador1
                 System.arraycopy(f1.getGen(), 0, nuevoGen1, 0, i2); //i2 expresa longitud, no posición
-                System.arraycopy(f2.getGen(), i2, nuevoGen1, i2, nuevoGen1.length); //Aquí i2 si representa una posición
+                System.arraycopy(f2.getGen(), i2, nuevoGen1, i2, nuevoGen1.length-i2); //Aquí i2 si representa una posición
                 nuevoJugador1.setGen(nuevoGen1);
 
                 //Para nuevoJugador2
                 System.arraycopy(f2.getGen(), 0, nuevoGen2, 0, i2);
-                System.arraycopy(f1.getGen(), i2, nuevoGen2, i2, nuevoGen2.length);
+                System.arraycopy(f1.getGen(), i2, nuevoGen2, i2, nuevoGen2.length-i2);
+                nuevoJugador2.setGen(nuevoGen2);
 
             }
         }
-        else{ //No toca emparejar, se copia directamente el gen de un finalista aleatorio (mas probabilidad cuanto mas fitness)
+        else{ //No toca recombinar, se copia directamente el gen de un finalista aleatorio (mas probabilidad cuanto mas fitness)
 
             /*
-                Como no vamos a emparejar, puede salir dos veces el mismo jugador
+                Como no vamos a recombinar, puede salir dos veces el mismo jugador
              */
             double prob;
             int i1;
@@ -175,7 +172,7 @@ public class Main {
                 if(prob < 0.045){ //4.5%
                     i1 = 0;
                 }
-                else if(prob < 0.1) { //5.5% (+ el anterior)
+                else if(prob < 0.1){ //5.5% (+ el anterior)
                     i1 = 1;
                 }
                 else if(prob < 0.165){ //6.5% (+ anteriores)
@@ -184,7 +181,7 @@ public class Main {
                 else if(prob < 0.25){ //8.5%
                     i1 = 3;
                 }
-                else if(prob < 0.35) { //10%
+                else if(prob < 0.35){ //10%
                     i1 = 4;
                 }
                 else if(prob < 0.5){ //15%
@@ -197,7 +194,7 @@ public class Main {
                     i1 = 7;
                 }
 
-                if(i < 1) {//primera iteracion
+                if(i < 1){//primera iteracion
                     nuevoJugador1 = finalistas.get(i1);
                 }
                 else nuevoJugador2 = finalistas.get(i1);
@@ -207,11 +204,11 @@ public class Main {
         /*
             Ahora pasamos a mirar, por cada posición del gen (ambos jugadores), si debe mutarse o no.
          */
-        for (int j = 0; j < 2; j++) { //para cada jugador
+        for (int j = 0; j < 2; j++){ //para cada jugador
 
-            for (int i = 0; i < nuevoJugador1.getGen().length; i++) { //para cada posicion del gen
+            for (int i = 0; i < nuevoJugador1.getGen().length; i++){ //para cada posicion del gen
 
-                if(rand.nextDouble() < 0.03){ //Mutamos
+                if(rand.nextDouble() < 0.001){ //Mutamos
                     //Mutación de un +-10% como máximo
 
                     /*
@@ -221,17 +218,17 @@ public class Main {
                                                                      --> 1.0 + (-0.1) = 0.9 (90%, reduccion del 10%)
                      */
 
-                    if(j < 1) { //Toca mutar el nuevoGen1
-                        nuevoGen1[i] = nuevoGen1[i] * (1.0 + ((double) rand.nextInt(21) - 10) / 10);
+                    if(j < 1){ //Toca mutar el nuevoGen1
+                        nuevoGen1[i] = nuevoGen1[i] * (1.0 + ((double) rand.nextInt(21) - 10.0) / 10.0);
                     }
-                    else nuevoGen2[i] = nuevoGen2[i] * (1.0 + ((double)rand.nextInt(21) - 10) / 10);
+                    else nuevoGen2[i] = nuevoGen2[i] * (1.0 + ((double)rand.nextInt(21) - 10.0) / 10.0);
                 }
             }
         }
 
 
         /*
-            Tras haber mutado y/o emparejado como corresponda, se guardan los genes en sus respectivos jugadores
+            Tras haber mutado y/o recombinado como corresponda, se guardan los genes en sus respectivos jugadores
             y se añaden a generacion.
          */
         nuevoJugador1.setGen(nuevoGen1);
@@ -255,7 +252,7 @@ public class Main {
         Torneo torneo;
         Jugador jDefault = new Jugador();
 
-        /** Se crean los 8 jugadores predeterminados y se añaden a @generacion **/
+        /** Se crean los 8 jugadores predeterminados y se añaden a generacion **/
         /*
             En primer lugar, creamos el gen que usarán los jugadores pasivos:
                 -Reglas que requieran subida: peso 0
@@ -296,17 +293,23 @@ public class Main {
                 jDefault.setGen(genDefault);
             }
 
-            generacion.set(i, jDefault);
+            generacion.add(jDefault);
         }
 
-        /** Se crean, de forma aleatoria e individual, los 56 jugadores restantes de la primera generacion y se añaden a @generacion **/
+        /*
+            Ya no se usaran mas jDefault ni genDefault, luego se ponen a null para que el GC libere memoria
+         */
+        jDefault = null;
+        genDefault = null;
+
+        /** Se crean, de forma aleatoria e individual, los 56 jugadores restantes de la primera generacion y se añaden a generacion **/
 
         for (int i = 8; i < 64; i++) {
-            generacion.set(i, generarJugador());
+            generacion.add(generarJugador());
         }
 
         do {
-            /** Llamada al constructor Torneo(@generacion), para que distribuya a los jugadores por las mesas **/
+            /** Llamada al constructor Torneo(generacion), para que distribuya a los jugadores por las mesas **/
 
             torneo = new Torneo(generacion, numGeneracion);
             finalistas.addAll(torneo.realizarTorneo()); //TODO se necesita que realizarTorneo retorne un ArrayList<Jugador>
@@ -316,7 +319,7 @@ public class Main {
              * A continuación, se calcula el fitness de cada uno de los finalistas (jugador.calcularFitness()) y se guardan las estadísticas como corresponda.
              *
              * Despues, se procede a reiniciar las variables que influyen en el fitness en los finalistas, y a
-             * la generacion de los jugadores restantes mediante mutación;
+             * la generacion de los jugadores restantes mediante mutación y recombinación;
              * **/
 
             generacion.clear(); //Los finalistas se han guardado, el resto desaparecen
@@ -328,7 +331,7 @@ public class Main {
                  * Tras calcularlo, se pasan los datos a fichero cuando corresponda.
                  * Si es necesario, se puede separar este bucle en dos partes para facilitar la implementación.
                  */
-                generacion.set(i, finalistas.get(i));
+                generacion.add(finalistas.get(i));
                 generacion.get(i).resetAtributosJugador();
             }
 
