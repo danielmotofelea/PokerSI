@@ -23,7 +23,7 @@ public class Main {
      * generarJugador servirá para los jugadores de la primera generacion
      * @return Jugador
      */
-    public static Jugador generarJugador()
+    private static Jugador generarJugador()
     {
         Jugador j = new Jugador();
         Random rand = new Random(); //rand.nextDouble() devuelve numero entre 0 y 1, para gen.
@@ -33,7 +33,7 @@ public class Main {
 
         //Inicializamos gen
         for (int i = 0; i < gen.length; i++) {
-            gen[i] = rand.nextDouble(); //TODO revisar agresividad, pues no se ha definido que valores puede tomar
+            gen[i] = rand.nextDouble();
         }
         return j;
     }
@@ -47,7 +47,7 @@ public class Main {
      * @param generacion
      * @param finalistas
      */
-    public static void generarJugadores(int numGeneracion, int posicion,ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
+    private static void generarJugadores(int numGeneracion, int posicion,ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
     {
         Jugador nuevoJugador1 = new Jugador();
         Jugador nuevoJugador2 = new Jugador();
@@ -234,8 +234,8 @@ public class Main {
         nuevoJugador1.setGen(nuevoGen1);
         nuevoJugador2.setGen(nuevoGen2);
 
-        generacion.set(posicion, nuevoJugador1);
-        generacion.set(posicion+1, nuevoJugador2);
+        generacion.add(posicion, nuevoJugador1);
+        generacion.add(posicion+1, nuevoJugador2);
 
     }
 
@@ -245,12 +245,12 @@ public class Main {
     * */
     public static void main(String [] args)
     {
-        ArrayList<Jugador> generacion = new ArrayList<Jugador>(64);         //ArrayList de jugadores, se pasa a clase Torneo
-        ArrayList<Jugador> finalistas = new ArrayList<Jugador>(8);          //ArrayList con los finalistas del anterior torneo
+        ArrayList<Jugador> generacion = new ArrayList<>(64);         //ArrayList de jugadores, se pasa a clase Torneo
+        ArrayList<Jugador> finalistas = new ArrayList<>(8);          //ArrayList con los finalistas del anterior torneo
         int numGeneracion = 1;                                              //Numero de la generación en la que nos encontramos
         double [] genDefault = new double[12];
         Torneo torneo;
-        Jugador jDefault = new Jugador();
+        Jugador jDefault;
 
         /** Se crean los 8 jugadores predeterminados y se añaden a generacion **/
         /*
@@ -270,9 +270,6 @@ public class Main {
         genDefault[8] = 1.0;
         genDefault[9] = 0.5;
         genDefault[10] = 0.0;
-        genDefault[11] =  1.0; //TODO definir rango valores que puede tomar agresividad
-
-        jDefault.setGen(genDefault);
 
         for (int i = 0; i < 8; i++) {
             if (i == 4) //Pasamos de comportamiento pasivo a agresivo, cambia el gen
@@ -288,11 +285,9 @@ public class Main {
                 genDefault[8] = 0.0;
                 genDefault[9] = 0.5;
                 genDefault[10] = 1.0;
-                genDefault[11] =  1.0; //TODO definir rango valores que puede tomar agresividad
-
-                jDefault.setGen(genDefault);
             }
-
+            jDefault = new Jugador();
+            jDefault.setGen(genDefault);
             generacion.add(jDefault);
         }
 
@@ -312,7 +307,7 @@ public class Main {
             /** Llamada al constructor Torneo(generacion), para que distribuya a los jugadores por las mesas **/
 
             torneo = new Torneo(generacion, numGeneracion);
-            finalistas.addAll(torneo.realizarTorneo()); //TODO se necesita que realizarTorneo retorne un ArrayList<Jugador>
+            finalistas.addAll(torneo.realizarTorneo());
 
             /** Una vez finaliza el torneo, deben devolverse los 8 finalistas para añadirlos a @finalistas
              *
