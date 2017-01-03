@@ -141,7 +141,8 @@ public class Jugador {
     public double calcularFitness(){
 
         if((manosJugadas != 0) && (fichasApostadas != 0))
-            fitness =  (manosGanadas/manosJugadas)*(fichasGanadas/(7*fichasApostadas)) / 100.0 ; //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
+            fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)fichasApostadas)) / 100.0 ;
+        //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
         else
             fitness = 0;
         return fitness;
@@ -219,35 +220,35 @@ public class Jugador {
         /** Valoramos de qué palo es cada carta, y también si hay COLOR*/
         for(int i=0; i < numCartas; i++){
 
-            if (cartasComunes.get(i).getPalo() == 1) {    /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
+            if (manoProvisional.get(i).getPalo() == 1) {    /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
                 contCorazones++;                          /** Despues aumentamos el contador de dicho palo para llevar el recuento */
                 if(contCorazones > 4){
-                    valorColor = cartasComunes.get(i).getValor();      /** Guarda el valor mas alto del color */
+                    valorColor = manoProvisional.get(i).getValor();      /** Guarda el valor mas alto del color */
                     color = true;
                     cor = true;
                 }
 
             }
-            if (cartasComunes.get(i).getPalo() == 2){
+            if (manoProvisional.get(i).getPalo() == 2){
                 contPicas++;
                 if(contPicas > 4){
-                    valorColor = cartasComunes.get(i).getValor();
+                    valorColor = manoProvisional.get(i).getValor();
                     color = true;
                     pic = true;
                 }
             }
-            if (cartasComunes.get(i).getPalo() == 3) {
+            if (manoProvisional.get(i).getPalo() == 3) {
                 contDiamantes++;
                 if(contDiamantes > 4){
-                    valorColor = cartasComunes.get(i).getValor();
+                    valorColor = manoProvisional.get(i).getValor();
                     color = true;
                     diam = true;
                 }
             }
-            if (cartasComunes.get(i).getPalo() == 4){
+            if (manoProvisional.get(i).getPalo() == 4){
                 contTreboles++;
                 if(contTreboles > 4){
-                    valorColor = cartasComunes.get(i).getValor();
+                    valorColor = manoProvisional.get(i).getValor();
                     color = true;
                     treb = true;
                 }
@@ -295,7 +296,7 @@ public class Jugador {
                 pareja1 = true;
                 valorPareja1 = j + 2;
             }
-            if ((numeroCarta[j] == 2) && (numeroCarta[j] != numeroCarta[valorPareja1]) && (pareja2 == false)) { // En este caso tenemos doble pareja
+            if ((numeroCarta[j] == 2) && (numeroCarta[j] != numeroCarta[valorPareja1 - 2]) && (pareja2 == false)) { // En este caso tenemos doble pareja
                 pareja2 = true;
                 doblePareja = true;
                 valorPareja2 = j + 2;
@@ -554,7 +555,7 @@ public class Jugador {
                 pareja1Comun = true;
                 valorPareja1Comun = j + 2;
             }
-            if ((numeroCartaComun[j] == 2) && (numeroCartaComun[j] != numeroCartaComun[valorPareja1]) && (pareja2Comun == false)) {
+            if ((numeroCartaComun[j] == 2) && (numeroCartaComun[j] != numeroCartaComun[valorPareja1Comun - 2]) && (pareja2Comun == false)) {
                 pareja2Comun = true;
                 dobleParejaComun = true;
                 valorPareja2Comun = j + 2;
