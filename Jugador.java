@@ -552,7 +552,7 @@ public class Jugador {
                 pareja1Comun = true;
                 valorPareja1Comun = j + 2;
             }
-            if ((numeroCartaComun[j] == 2) && (numeroCartaComun[j] != numeroCartaComun[valorPareja1Comun - 2]) && (pareja2Comun == false)) {
+            if ((numeroCartaComun[j] == 2) && (j+2 != valorPareja1Comun)) {
                 pareja2Comun = true;
                 dobleParejaComun = true;
                 valorPareja2Comun = j + 2;
