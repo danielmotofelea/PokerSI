@@ -575,7 +575,7 @@ public class Mesa {
         for (int i = 0; i < jugadoresMesa.size(); i++) {
 
             if (jugadoresMesa.get(sigLibre % jugadoresMesa.size()).isActivo()) {
-                decision = jugadoresMesa.get(sigLibre % jugadoresMesa.size()).tomarDecision(maxApuestaActual-(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas()),500,ciegaG,getMP(jugadoresMesa.size()),getMM(jugadoresMesa.size()),getMMU(jugadoresMesa.size()),getMP(jugadoresMesa.size()),getDM(jugadoresMesa.size()),getDMU(jugadoresMesa.size()));
+                decision = jugadoresMesa.get(sigLibre % jugadoresMesa.size()).tomarDecision(maxApuestaActual-(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas()),bote,ciegaG,getMP(jugadoresMesa.size()),getMM(jugadoresMesa.size()),getMMU(jugadoresMesa.size()),getMP(jugadoresMesa.size()),getDM(jugadoresMesa.size()),getDMU(jugadoresMesa.size()));
 
                 if (decision > 1 && subidas < 3) {
                     decision = decision + maxApuestaActual;
