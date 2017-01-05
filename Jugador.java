@@ -876,12 +876,10 @@ public class Jugador {
         int subidaMaxima;
         int apuesta; //Se usará como return
 
-        /** Una buena opcion es crear un arraylist y añadir las cartas actuales y mandarlo al borroso para
-         ver que podemos hacer con la mejor mano que tenemos*/
 
-            /***********************************************
-             *          COMIENZO CONTROLADOR BORROSO       *
-             ***********************************************/
+        /***********************************************
+         *          COMIENZO CONTROLADOR BORROSO       *
+         ***********************************************/
         FIS fis = new FIS();
         FunctionBlock fb = new FunctionBlock(fis);
         fis.addFunctionBlock("Decision", fb);
@@ -893,14 +891,18 @@ public class Jugador {
          *  END_VAR */
 
         Variable fichas = new Variable("fichas"); // Cantidad de fichas del jugador
+        fb.setVariable("fichas", fichas);
         Variable fase = new Variable("fase");     // Fase de la mano (preflop, flop...)
+        fb.setVariable("fase", fase);
         Variable mano = new Variable("mano");     // "Calidad" de la mano: muy mala, mala...
+        fb.setVariable("mano", mano);
 
         /** VAR_OUTPUT
-         *  decision : REAL;
+         *  decision : INTEGER;
          *  END_VAR */
 
         Variable decision = new Variable("decision");
+        fb.setVariable("decision", decision);
 
         /**
          FUZZIFY fichas
@@ -910,8 +912,7 @@ public class Jugador {
          END_FUZZIFY */
 
         /*
-            Valores de medias y desviaciones tipicas se calculan en mesa cada vez que se elimina un jugador. A la espera
-            de ver la implementacion para asignar los nombres de parametros correctos
+            Valores de medias y desviaciones tipicas se calculan en mesa cada vez que se elimina un jugador.
          */
         MembershipFunction mPocas = new MembershipFunctionGaussian(new Value(mediaPocas), new Value(desvPocas));
         MembershipFunction mMedias = new MembershipFunctionGaussian(new Value(mediaMedias), new Value(desvMedias));
@@ -952,12 +953,27 @@ public class Jugador {
          END_FUZZIFY */
 
         /*
-            TODO asignar valores definicion de funciones gaussianas, teniendo en cuenta ponderación cartas
+            TODO Probar graficas
          */
-        MembershipFunction mMuyMala = new MembershipFunctionGaussian(new Value(), new Value());
-        MembershipFunction mMala = new MembershipFunctionGaussian(new Value(), new Value());
-        MembershipFunction mBuena = new MembershipFunctionGaussian(new Value(), new Value());
-        MembershipFunction mMuyBuena = new MembershipFunctionGaussian(new Value(), new Value());
+
+        Value mMalaX[] = { new Value(2), new Value(106) }; //Carta alta (min) a pareja de 6
+        Value mMalaY[] = { new Value(1), new Value(0) };
+       /*
+        TODO borrar este comentario en caso de que la grafica funcione bien
+        Value malaX[] = { new Value(9), new Value(108), new Value(208) }; //Carta alta (9) a doble pareja (2 y 6, 208)
+        Value malaY[] = { new Value(0), new Value(1), new Value(0) }; //Maximo en pareja de 8 (108)
+        Value buenaX[] = { new Value(205), new Value(303), new Value(406) }; //Doble pareja (2 y 3, 205) a escalera (a 6, 406)
+        Value buenaY[] = { new Value(0), new Value(1), new Value(0) };  //Maximo en Trio de 3 (303)
+        */
+        Value mBuenaX[] = { new Value(311), new Value(918) }; //Trio (J) a escalera de color (max)
+        Value mBuenaY[] = { new Value(0), new Value(1) };
+
+        MembershipFunction mMuyMala = new MembershipFunctionPieceWiseLinear(mMalaX, mMalaY);
+        //MembershipFunction mMala = new MembershipFunctionPieceWiseLinear(malaX, malaY);    TODO borrar si funciona la grafica
+        //MembershipFunction mBuena = new MembershipFunctionPieceWiseLinear(buenaX, buenaY); TODO borrar si funciona la grafica
+        MembershipFunction mMala = new MembershipFunctionTriangular(new Value(9), new Value(108), new Value(208));
+        MembershipFunction mBuena = new MembershipFunctionTriangular(new Value(205), new Value(303), new Value(406));
+        MembershipFunction mMuyBuena = new MembershipFunctionPieceWiseLinear(mBuenaX, mBuenaY);
 
         LinguisticTerm ltMuyMala = new LinguisticTerm("muyMala", mMuyMala);
         LinguisticTerm ltMala = new LinguisticTerm("mala", mMala);
@@ -983,20 +999,12 @@ public class Jugador {
             Pasar/NoIr: 0 a 1
             Igualar: 0.5 a 2 (iguala la apuesta mínima)
             Apostar: 1 a ¿10?.
-
             Ejemplos:
                         -si obtenemos un valor de 0'6, se considerará pasar/noIr o igualar en función de las reglas
                         -si obtenemos un valor de 1'9, se considerará Igualar o subir en función de las reglas
                         -si obtenemos un valor de 3'7, se tomará una subida de 3 veces la ciega grande
+            Formula que determinará el retorno: apuestaMinima + (int) fis.getVariable("decision").getValue()*ciegaGrande
 
-            Formula que determinará el retorno: apuestaMínima + valorDecisión(entero) + valorDecision*agresividad
-
-            Habrá que determinar si la agresividad sería necesaria, viendo que sólo se tiene en cuenta en la subida
-            y esta ya devuelve una cantidad de subida (que hay que limitar, en funcion del valor de las ciegas)
-
-            Lo recomendable sería hacer pruebas cuando la aplicación esté operativa, para ver si se usa correctamente
-            todo el rango de subidas que tendrá asignada la aplicación o, por el contrario, se confirma la necesidad
-            de la agresividad.
          */
 
         Value pniX[] = { new Value(0), new Value(1) };
@@ -1010,6 +1018,18 @@ public class Jugador {
         subidaMaxima = (apuestaMaxima - apuestaMinima) / ciegaGrande;
         Value subX[] = { new Value(1), new Value(2), new Value(subidaMaxima) };
         Value subY[] = { new Value(0), new Value(1), new Value(1) };
+        if(subidaMaxima == 0) //La subida no llega a 2 ciegas: ciega de 50, bote de 75 -> Puede subir 1 ciega
+        {
+            /**
+             * Se solapara esta grafica completamente con la de Igualar, se decidira con las reglas
+             */
+            subX = null;
+            subY = null;
+            Value subX2[] = { new Value(1), new Value(2) };
+            Value subY2[] = { new Value(1), new Value(0) };
+            System.arraycopy(subX2, 0, subX, 0, subX2.length);
+            System.arraycopy(subY2, 0, subY, 0, subY2.length);
+        }
         MembershipFunction mSubir = new MembershipFunctionPieceWiseLinear(subX, subY);
 
         LinguisticTerm ltpasarNI = new LinguisticTerm("pasar/noIr", mPasarNI);
@@ -1200,14 +1220,27 @@ public class Jugador {
         ruleBlockHashMap.put(ruleBlock.getName(), ruleBlock);
         fb.setRuleBlocks(ruleBlockHashMap);
 
-        pruebaBorroso(ruleBlockHashMap); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
 
         /**
          * TODO especificar donde se van a guardar los valores de grado de soporte y peso de las reglas, etc
          */
         /**
-         * TODO especificar valores de entrada al borroso, previos al evaluate
+         * Valores de entrada
          */
+
+        fis.getVariable("fichas").setValue((double) this.fichas);
+
+        if(cartasComunes.size() == 0)
+        {
+            fis.getVariable("fase").setValue(1); //Preflop
+        }
+        else if (cartasComunes.size() == 3)
+        {
+            fis.getVariable("fase").setValue(2); //Flop
+        }
+        else fis.getVariable("fase").setValue(3); //Turn o River
+
+        fis.getVariable("mano").setValue(this.mejorMano[1]); //Introducimos el valor de la ponderacion de la mano
 
         fis.evaluate();
 
@@ -1217,24 +1250,33 @@ public class Jugador {
          * que mediante sus pesos lo puedan limitar, es muy improbable que se de el caso del punto de corte, debido a que estamos
          * trabajando con bastante precision (double)
          */
-
-        if(fis.getVariable("decision").getMembership("pasar/noIr") > fis.getVariable("decision").getMembership("igualar")) //Si es mayor que igualar, es mayor que subir
+        double pertenenciaPNI = fis.getVariable("decision").getMembership("pasar/noIr");
+        double pertenenciaIG = fis.getVariable("decision").getMembership("igualar");
+        double pertenenciaSUB = fis.getVariable("decision").getMembership("subir");
+        if(pertenenciaPNI > pertenenciaIG) //Si es mayor que igualar, es mayor que subir
         {
             apuesta = 0; //Si pasa o se va se controla en mesa
         }
-        else if (fis.getVariable("decision").getMembership("igualar") > fis.getVariable("decision").getMembership("subir"))
-             {
-                 apuesta = 1; //Se iguala la apuesta mínima
-             }
-             else{
-                    apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*ciegaGrande;
-                    /**
-                     *  En caso de subir, el valor entero obtenido en el borroso se entenderá como la cantidad de
-                     *  ciegas grandes que se añaden a la apuesta mínima. A ello se le añade además la cantidad de ciegas
-                     *  que se sube debido a la agresividad del jugador.
-                      */
+        else if(pertenenciaIG > pertenenciaSUB)
+        {
+            apuesta = 1; //Se iguala la apuesta mínima
+        }
+        else{ //Se sube
 
-             }
+            /**
+             *  En caso de subir, el valor entero obtenido en el borroso se entenderá como la cantidad de
+             *  ciegas grandes que se añaden a la apuesta mínima.
+             */
+            apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*ciegaGrande;
+
+            if(apuesta > this.fichas) //La apuesta devuelta es superior a las fichas que tiene el jugador
+            {
+                apuesta = this.fichas;
+            }
+        }
+
+        pruebaBorroso(ruleBlockHashMap, fis); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
+
 
         /**
          * TODO especificar cada cuantas generaciones (this.identificacion[0]) hay que guardar en fichero el output del fis
@@ -1248,13 +1290,14 @@ public class Jugador {
      * La única finalidad de la función pruebaBorroso es comprobar que las reglas y las variables han quedado bien
      * definidas.
      * @param ruleBlockHashMap
+     * @param fis
      */
-    public void pruebaBorroso(HashMap<String, RuleBlock> ruleBlockHashMap)
+    public void pruebaBorroso(HashMap<String, RuleBlock> ruleBlockHashMap, FIS fis)
     {
-        /**
-         * TODO definir prueba del borroso
-         */
-        System.out.println(ruleBlockHashMap.toString());
+
+        System.out.println(" /************ PRUEBA CONTROLADOR BORROSO ***************/");
+        JDialogFis jdf = new JDialogFis(fis, 800, 600);
+        jdf.repaint();
 
     }
 }
