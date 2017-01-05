@@ -18,13 +18,13 @@ public class Jugador {
     private int fichas;
     private int fichasGanadas;
     private int fichasApostadas;
-    private int totalfichasApostadas;
+    private int totalFichasApostadas;
     private int manosGanadas;
     private int manosJugadas;
     private double []gen; /** Posiciones 0 a 10: pesos de reglas, posicion 11: agresividad */
     private double [] mejorMano; /** Se usará como retorno de la función*/
     private boolean activo;
-    //private boolean ganador;
+
     private int valorMano;
     private double fitness;
     private int []identificacion;
@@ -35,12 +35,11 @@ public class Jugador {
         this.fichas = 1000;
         this.fichasGanadas = 0;
         this.fichasApostadas = 0;
-        this.totalfichasApostadas=0;
         this.manosGanadas = 0;
         this.manosJugadas = 0;
         this.fitness = 0;
-        this.activo=true;
-        //this.ganador=false;
+        this.totalFichasApostadas = 0;
+        this.activo = true;
         this.valorMano = 1;
         this.gen = new double[11];                     /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
@@ -82,11 +81,11 @@ public class Jugador {
     }
 
     public void setFichasApostadas(int fichasApostadas) {
-        this.fichasApostadas = this.fichasApostadas+fichasApostadas;
-    }
 
-    public void resetFichasApostadas(){
-        this.fichasApostadas=0;
+        this.fichasApostadas = this.fichasApostadas + fichasApostadas;
+    }
+    public void resetFichasApostadas() {
+        this.fichasApostadas = 0;
     }
 
     public int getManosGanadas() {
@@ -128,8 +127,8 @@ public class Jugador {
         return fitness;
     }
 
-    public double getMejorMano() {
-        return mejorMano[1];
+    public double []getMejorMano() {
+        return mejorMano;
     }
 
     public Carta[] getCartasEnMano() {
@@ -148,49 +147,47 @@ public class Jugador {
         this.cartasComunes = cartasComunes;
     }
 
-    public boolean isActivo() {
+    public boolean isActivo(){
         return activo;
     }
 
-    public void setActivo(boolean activo) {
+    public void setActivo( boolean activo){
         this.activo = activo;
     }
+        public int getValorMano() {
+                return valorMano;
+            }
 
+             public void setValorMano(int valorMano) {
+                this.valorMano = valorMano;
+            }
 
-    public int getValorMano() {
-        return valorMano;
-    }
+             public int getTotalfichasApostadas() {
+                return totalFichasApostadas;
+            }
 
-    public void setValorMano(int valorMano) {
-        this.valorMano = valorMano;
-    }
+             public void settotalFichasApostadas(int totalFichasApostadas) {
+                this.totalFichasApostadas = this.totalFichasApostadas+totalFichasApostadas;
+            }
 
-    public int getTotalfichasApostadas() {
-        return totalfichasApostadas;
-    }
-
-    public void setTotalfichasApostadas(int totalfichasApostadas) {
-        this.totalfichasApostadas = this.totalfichasApostadas+totalfichasApostadas;
-    }
-
-    @Override
-    public String toString() {
-        return "Jugador{" +
-                "fichas=" + fichas +
-                ", fichasGanadas=" + fichasGanadas +
-                ", fichasApostadas=" + fichasApostadas +
-                ", totalfichasApostadas=" + totalfichasApostadas +
-                ", manosGanadas=" + manosGanadas +
-                ", manosJugadas=" + manosJugadas +
-                ", gen=" + Arrays.toString(gen) +
-                ", mejorMano=" + Arrays.toString(mejorMano) +
-                ", activo=" + activo +
-                ", valorMano=" + valorMano +
-                ", fitness=" + fitness +
-                ", identificacion=" + Arrays.toString(identificacion) +
-                ", cartasEnMano=" + Arrays.toString(cartasEnMano) +
-                ", cartasComunes=" + cartasComunes +
-                '}';
+             @Override
+     public String toString() {
+                return "Jugador{" +
+                                "fichas=" + fichas +
+                                ", fichasGanadas=" + fichasGanadas +
+                                ", fichasApostadas=" + fichasApostadas +
+                                ", totalFichasApostadas=" + totalFichasApostadas +
+                                ", manosGanadas=" + manosGanadas +
+                                ", manosJugadas=" + manosJugadas +
+                                ", gen=" + Arrays.toString(gen) +
+                                ", mejorMano=" + Arrays.toString(mejorMano) +
+                                ", activo=" + activo +
+                                ", valorMano=" + valorMano +
+                                ", fitness=" + fitness +
+                                ", identificacion=" + Arrays.toString(identificacion) +
+                                ", cartasEnMano=" + Arrays.toString(cartasEnMano) +
+                                ", cartasComunes=" + cartasComunes +
+                                '}';
     }
 
     public void resetAtributosJugador(){
@@ -210,9 +207,9 @@ public class Jugador {
 
     public double calcularFitness(){
 
-        if((manosJugadas != 0) && (totalfichasApostadas != 0))
+        if((manosJugadas != 0) && (totalFichasApostadas != 0))
             fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)fichasApostadas)) / 100.0 ;
-            //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
+        //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
         else
             fitness = 0;
         return fitness;
@@ -254,6 +251,10 @@ public class Jugador {
         int contTreboles = 0;
         int []numeroCarta = new int[13]; /** Array que cuenta las veces que se repiten las cartas por su valor pero, valor carta = posicion + 2*/
         int numeroDeLaCarta;
+        int contEscCor = 0;
+        int contEscDiam = 0;
+        int contEscPic = 0;
+        int contEscTreb = 0;
 
         int valorPareja1 = 0;
         int valorPareja2 = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
@@ -265,8 +266,6 @@ public class Jugador {
         int valorColor = 0;
         int valorPoker = 0;
         int valorCartaAlta = 0;
-
-        // int resul = 1;            /** Valor por defecto, dado que si no tenemos ninguna de las manos anteriores, tendremos carta alta*/
 
         for(int i=0; i<13; i++)
             numeroCarta[i] = 0;
@@ -332,9 +331,32 @@ public class Jugador {
 
                 if(valorActual+1 == valorSiguiente) {
                     contEscalera++;
+
+                    if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 1))
+                        contEscCor++;
+                    else
+                        contEscCor = 0;
+
+                    if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 2))
+                        contEscPic++;
+                    else
+                        contEscPic = 0;
+
+                    if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 3))
+                        contEscDiam++;
+                    else
+                        contEscDiam = 0;
+
+                    if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 4))
+                        contEscTreb++;
+                    else
+                        contEscTreb = 0;
+
                     if(contEscalera == 5) {
                         escalera = true;
                         valorEscaleraFinal = valorSiguiente;
+                        if((contEscPic>5) || (contEscDiam>5) || (contEscCor>5) || (contEscTreb > 5))
+                            escaleraColor = true;
                     }
                 }
                 else if(!escalera)
@@ -347,10 +369,28 @@ public class Jugador {
             if((manoProvisional.get(i).getValor() == 14) && (manoProvisional.get(0).getValor() == 2) &&
                     (manoProvisional.get(1).getValor() == 3) && (manoProvisional.get(2).getValor() == 4) &&
                     (manoProvisional.get(3).getValor() == 5)) {
+
                 escalera = true;
                 valorEscaleraFinal = 5;
+
+                if((manoProvisional.get(i).getPalo() == 1) && (manoProvisional.get(0).getPalo() == 1) &&
+                        (manoProvisional.get(1).getPalo() == 1) && (manoProvisional.get(2).getPalo() == 1) && (manoProvisional.get(3).getPalo() == 1))
+                    escaleraColor = true;
+
+                if((manoProvisional.get(i).getPalo() == 2) && (manoProvisional.get(0).getPalo() == 2) &&
+                        (manoProvisional.get(1).getPalo() == 2) && (manoProvisional.get(2).getPalo() == 2) && (manoProvisional.get(3).getPalo() == 2))
+                    escaleraColor = true;
+
+                if((manoProvisional.get(i).getPalo() == 3) && (manoProvisional.get(0).getPalo() == 3) &&
+                        (manoProvisional.get(1).getPalo() == 3) && (manoProvisional.get(2).getPalo() == 3) && (manoProvisional.get(3).getPalo() == 3))
+                    escaleraColor = true;
+
+                if((manoProvisional.get(i).getPalo() == 4) && (manoProvisional.get(0).getPalo() == 4) &&
+                        (manoProvisional.get(1).getPalo() == 4) && (manoProvisional.get(2).getPalo() == 4) && (manoProvisional.get(3).getPalo() == 4))
+                    escaleraColor = true;
+
             }
-            if(manoProvisional.get(i).getValor()> valorCartaAlta)
+            if(manoProvisional.get(i).getValor() > valorCartaAlta)
                 valorCartaAlta = manoProvisional.get(i).getValor();
         }
 
@@ -401,11 +441,6 @@ public class Jugador {
         /** OBSERVACION: Para escalera no hace falta valorar dado que si anteriormente escalera = true
          *               ya sabemos que tenemos escalera. */
 
-        /** Para ver si tenemos escalera de color */
-
-        if (escalera && color){
-            escaleraColor = true;
-        }
 
         /** Ahora habra que devolver la mejor mano */
 
@@ -465,7 +500,7 @@ public class Jugador {
 
 
     public double ponderarMano(int valorCartaAlta, boolean cor, boolean pic, boolean diam, int valorPareja1, int valorPareja2,
-                               int valorPoker, int valorTrio, int []valorFull,int valorColor, int valorEscaleraFinal){
+                            int valorPoker, int valorTrio, int []valorFull,int valorColor, int valorEscaleraFinal){
 
         double ponderacion = 0.0;
 
@@ -505,6 +540,10 @@ public class Jugador {
         int contTrebolesComun = 0;
         int []numeroCartaComun = new int[13]; /** Array que cuenta las veces que se repiten las cartas por su valor pero, valor carta = posicion + 2*/
         int numeroDeLaCartaComun;
+        int contEscCorComun = 0;
+        int contEscDiamComun = 0;
+        int contEscPicComun = 0;
+        int contEscTrebComun = 0;
 
         int valorPareja1Comun = 0;
         int valorPareja2Comun = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
@@ -591,9 +630,32 @@ public class Jugador {
 
                 if(valorActualComun+1 == valorSiguienteComun) {
                     contEscaleraComun++;
+
+                    if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 1))
+                        contEscCorComun++;
+                    else
+                        contEscCorComun = 0;
+
+                    if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 2))
+                        contEscPicComun++;
+                    else
+                        contEscPicComun = 0;
+
+                    if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 3))
+                        contEscDiamComun++;
+                    else
+                        contEscDiamComun = 0;
+
+                    if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 4))
+                        contEscTrebComun++;
+                    else
+                        contEscTrebComun = 0;
+
                     if(contEscaleraComun == 5) {
                         escaleraComun = true;
                         valorEscaleraFinalComun = valorSiguienteComun;
+                        if((contEscPicComun>5) || (contEscDiamComun>5) || (contEscCorComun>5) || (contEscTrebComun > 5))
+                            escaleraColorComun = true;
                     }
                 }
                 else if(!escaleraComun)
@@ -602,13 +664,29 @@ public class Jugador {
             }
 
             /**
-             A continuación, comprobamos el caso especial de la escalera A-2-3-4-5
+                A continuación, comprobamos el caso especial de la escalera A-2-3-4-5
              */
             if((cartasComunes.get(i).getValor() == 14) && (cartasComunes.get(0).getValor() == 2) &&
                     (cartasComunes.get(1).getValor() == 3) && (cartasComunes.get(2).getValor() == 4) &&
                     (cartasComunes.get(3).getValor() == 5)) {
                 escaleraComun = true;
                 valorEscaleraFinalComun = 5;
+
+                if((cartasComunes.get(i).getPalo() == 1) && (cartasComunes.get(0).getPalo() == 1) &&
+                        (cartasComunes.get(1).getPalo() == 1) && (cartasComunes.get(2).getPalo() == 1) && (cartasComunes.get(3).getPalo() == 1))
+                    escaleraColorComun = true;
+
+                if((cartasComunes.get(i).getPalo() == 2) && (cartasComunes.get(0).getPalo() == 2) &&
+                        (cartasComunes.get(1).getPalo() == 2) && (cartasComunes.get(2).getPalo() == 2) && (cartasComunes.get(3).getPalo() == 2))
+                    escaleraColorComun = true;
+
+                if((cartasComunes.get(i).getPalo() == 3) && (cartasComunes.get(0).getPalo() == 3) &&
+                        (cartasComunes.get(1).getPalo() == 3) && (cartasComunes.get(2).getPalo() == 3) && (cartasComunes.get(3).getPalo() == 3))
+                    escaleraColorComun = true;
+
+                if((cartasComunes.get(i).getPalo() == 4) && (cartasComunes.get(0).getPalo() == 4) &&
+                        (cartasComunes.get(1).getPalo() == 4) && (cartasComunes.get(2).getPalo() == 4) && (cartasComunes.get(3).getPalo() == 4))
+                    escaleraColorComun = true;
             }
             if(cartasComunes.get(i).getValor()> valorCartaAltaComun)
                 valorCartaAltaComun = cartasComunes.get(i).getValor();
@@ -654,14 +732,6 @@ public class Jugador {
         }
 
         /** COLOR VALORADO ANTERIORMENTE */
-
-
-        /** PARA ESCALERA DE COLOR */
-
-        if (escaleraComun && colorComun){
-            escaleraColorComun = true;
-        }
-
 
         /** Ahora habra que devolver la mejor mano */
 
@@ -808,9 +878,9 @@ public class Jugador {
         /** Una buena opcion es crear un arraylist y añadir las cartas actuales y mandarlo al borroso para
          ver que podemos hacer con la mejor mano que tenemos*/
 
-        /***********************************************
-         *          COMIENZO CONTROLADOR BORROSO       *
-         ***********************************************/
+            /***********************************************
+             *          COMIENZO CONTROLADOR BORROSO       *
+             ***********************************************/
         FIS fis = new FIS();
         FunctionBlock fb = new FunctionBlock(fis);
         fis.addFunctionBlock("Decision", fb);
@@ -912,13 +982,17 @@ public class Jugador {
             Pasar/NoIr: 0 a 1
             Igualar: 0.5 a 2 (iguala la apuesta mínima)
             Apostar: 1 a ¿10?.
+
             Ejemplos:
                         -si obtenemos un valor de 0'6, se considerará pasar/noIr o igualar en función de las reglas
                         -si obtenemos un valor de 1'9, se considerará Igualar o subir en función de las reglas
                         -si obtenemos un valor de 3'7, se tomará una subida de 3 veces la ciega grande
+
             Formula que determinará el retorno: apuestaMínima + valorDecisión(entero) + valorDecision*agresividad
+
             Habrá que determinar si la agresividad sería necesaria, viendo que sólo se tiene en cuenta en la subida
             y esta ya devuelve una cantidad de subida (que hay que limitar, en funcion del valor de las ciegas)
+
             Lo recomendable sería hacer pruebas cuando la aplicación esté operativa, para ver si se usa correctamente
             todo el rango de subidas que tendrá asignada la aplicación o, por el contrario, se confirma la necesidad
             de la agresividad.
@@ -1148,18 +1222,18 @@ public class Jugador {
             apuesta = 0; //Si pasa o se va se controla en mesa
         }
         else if (fis.getVariable("decision").getMembership("igualar") > fis.getVariable("decision").getMembership("subir"))
-        {
-            apuesta = 1; //Se iguala la apuesta mínima
-        }
-        else{
-            apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*ciegaGrande;
-            /**
-             *  En caso de subir, el valor entero obtenido en el borroso se entenderá como la cantidad de
-             *  ciegas grandes que se añaden a la apuesta mínima. A ello se le añade además la cantidad de ciegas
-             *  que se sube debido a la agresividad del jugador.
-             */
+             {
+                 apuesta = 1; //Se iguala la apuesta mínima
+             }
+             else{
+                    apuesta = apuestaMinima + (int) fis.getVariable("decision").getValue()*ciegaGrande;
+                    /**
+                     *  En caso de subir, el valor entero obtenido en el borroso se entenderá como la cantidad de
+                     *  ciegas grandes que se añaden a la apuesta mínima. A ello se le añade además la cantidad de ciegas
+                     *  que se sube debido a la agresividad del jugador.
+                      */
 
-        }
+             }
 
         /**
          * TODO especificar cada cuantas generaciones (this.identificacion[0]) hay que guardar en fichero el output del fis
@@ -1182,11 +1256,4 @@ public class Jugador {
         System.out.println(ruleBlockHashMap.toString());
 
     }
-
-
-    public int tomarDecision(){
-        int devolver=0;
-        return devolver;
-    }
 }
-
