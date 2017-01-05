@@ -317,7 +317,7 @@ public class Mesa {
 
         for (int i = 0; i < jugadoresMesa.size(); i++) {
             if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() == mano)) {
-                jugadoresMesa.get(i).setFichas(bote / ganador);
+                jugadoresMesa.get(i).setFichas(jugadoresMesa.get(i).getFichas()+bote/ganador);
                 jugadoresMesa.get(i).setManosGanadas(jugadoresMesa.get(i).getManosGanadas()+1);
                 jugadoresMesa.get(i).setFichasGanadas(jugadoresMesa.get(i).getFichasGanadas()+(bote/ganador));
             }
@@ -627,7 +627,7 @@ public class Mesa {
                         //igualar la apuesta minima
                         //primero actualizo las fichas que ha apostado el jugador
                         jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichasApostadas(aux);
-
+                        jugadoresMesa.get(sigLibre % jugadoresMesa.size()).settotalFichasApostadas(aux);
                         //Ahora quito las fichas necesarias a jugador
                         //Fichas que tiene el jugador -(diferencia entre la maxima apuesta de la mano y la apuesta actual de jugador)
                         jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas() - aux);
