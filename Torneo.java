@@ -47,7 +47,7 @@ public class Torneo {
             finalistas.add(m.jugar());//El método jugar devuelve el ganador de la mesa.
         }
         m=new Mesa(finalistas,idGen);//Constructor mesa: Mesa(Jugadores, idGen);
-        m.jugarMesaFinal();
+        m.jugar();
         return finalistas;
     }
 
