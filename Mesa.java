@@ -1,5 +1,6 @@
 package Version1;
 
+import com.sun.org.apache.xpath.internal.SourceTree;
 
 import java.util.ArrayList;
 
@@ -94,7 +95,7 @@ public class Mesa {
     public Jugador jugar() {
 
         b = new Baraja();
-        while(jugadoresMesa.size()!=1 && maxManos<2){  /** Mientras haya mas de un jugador en la mesa se van a jugar manos */
+        while(jugadoresMesa.size()!=1 && maxManos<5){  /** Mientras haya mas de un jugador en la mesa se van a jugar manos */
         b=new Baraja();
 
 
@@ -213,6 +214,7 @@ public class Mesa {
                 jugadoresMesa.get(i).setActivo(true);
             }
             ActualizarMesa();
+            ActualizaridCiega();
             bote=0;
             maxManos++;
             cartasComunes = new ArrayList<Carta>();
@@ -317,7 +319,7 @@ public class Mesa {
             if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() == mano)) {
                 jugadoresMesa.get(i).setFichas(bote / ganador);
                 jugadoresMesa.get(i).setManosGanadas(jugadoresMesa.get(i).getManosGanadas()+1);
-                jugadoresMesa.get(i).setFichasGanadas(jugadoresMesa.get(i).getFichasGanadas()+bote);
+                jugadoresMesa.get(i).setFichasGanadas(jugadoresMesa.get(i).getFichasGanadas()+(bote/ganador));
             }
         }
 
@@ -356,6 +358,7 @@ public class Mesa {
         for(int i=0;i<jugadoresMesa.size();i++){
             if(jugadoresMesa.get(i).getFichas()<1){
                 jugadoresMesa.remove(i);
+                i=0;
             }
         }
     }
@@ -399,6 +402,12 @@ public class Mesa {
             jugadoresMesa.get(i).setIdentificacion(identificacion);
         }
 
+    }
+
+    public void ActualizaridCiega(){
+        if(idCiega>jugadoresMesa.size()-1){
+            idCiega=0;
+        }
     }
 
     public double getMP(int i){
@@ -575,7 +584,7 @@ public class Mesa {
         for (int i = 0; i < jugadoresMesa.size(); i++) {
 
             if (jugadoresMesa.get(sigLibre % jugadoresMesa.size()).isActivo()) {
-                decision = jugadoresMesa.get(sigLibre % jugadoresMesa.size()).tomarDecision(maxApuestaActual-(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas()),bote,ciegaG,getMP(jugadoresMesa.size()),getMM(jugadoresMesa.size()),getMMU(jugadoresMesa.size()),getMP(jugadoresMesa.size()),getDM(jugadoresMesa.size()),getDMU(jugadoresMesa.size()));
+                decision = jugadoresMesa.get(sigLibre % jugadoresMesa.size()).tomarDecision(ciegaG,bote,ciegaG,getMP(jugadoresMesa.size()),getMM(jugadoresMesa.size()),getMMU(jugadoresMesa.size()),getMP(jugadoresMesa.size()),getDM(jugadoresMesa.size()),getDMU(jugadoresMesa.size()));
 
                 if (decision > 1 && subidas < 3) {
                     decision = decision + maxApuestaActual;
@@ -587,6 +596,7 @@ public class Mesa {
                     jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas() - decision);
                     //Acrualizar fichas apostadas del jugador
                     jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichasApostadas(decision);
+                    jugadoresMesa.get(sigLibre % jugadoresMesa.size()).settotalFichasApostadas(decision);
                     //Actualizo la apuets maxima de la mesa, si procede
                     //compurebo si lo que leva el jugador apostando hasta ahora supera a la maxApuestaActual de la mesa.
                     if (jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas() > maxApuestaActual) {
@@ -635,3 +645,4 @@ public class Mesa {
 
 
 }
+
