@@ -35,6 +35,7 @@ public class Main {
         for (int i = 0; i < gen.length; i++) {
             gen[i] = rand.nextDouble();
         }
+        j.setGen(gen);
         return j;
     }
 
