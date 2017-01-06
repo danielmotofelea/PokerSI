@@ -92,36 +92,20 @@ public class Mesa {
                 '}';
     }
 
+
+    /**
+     * Metodo principal de mesa. Este metodo enfrenta a los jugadores de la mesa hasta que solo quede 1 o se hayan disputdo 300 manos.
+     * Si solo queda un jugador,este es devuelto. Si se llega al final del metodo por superar 300 manos se devuelve al jugador con mayor bote.
+     * @return
+     */
+
+
     public Jugador jugar() {
 
         b = new Baraja();
-        while(jugadoresMesa.size()!=1 && maxManos<5){  /** Mientras haya mas de un jugador en la mesa se van a jugar manos */
+        ActualizarIdentificacion();
+        while(jugadoresMesa.size()!=1 && maxManos<50){  /** Mientras haya mas de un jugador en la mesa se van a jugar manos */
         b=new Baraja();
-
-
-            /**Carta c1=new Carta(6,3);
-             Carta c2=new Carta(5,1);
-
-             Carta c3=new Carta(10,2);
-             Carta c4=new Carta(10,4);
-             Carta c5=new Carta(10,3);
-             Carta c6=new Carta(10,1);
-             Carta c7=new Carta(11,4);
-
-             Carta [] cartasEnMano =new Carta[2];
-             cartasComunes.add(c3);
-             cartasComunes.add(c4);
-             cartasComunes.add(c5);
-             cartasComunes.add(c6);
-             cartasComunes.add(c7);
-             cartasEnMano[0]=c1;
-             cartasEnMano[1]=c2;
-
-             jugadoresMesa.get(0).setCartasEnMano(cartasEnMano);
-             jugadoresMesa.get(0).setCartasComunes(cartasComunes);
-
-             jugadoresMesa.get(0).calcularMejorMano();
-             System.out.println(jugadoresMesa.get(0).toString());*/
 
             /** Quitar ciegas a los jugadores que toca
              * Dicho indice se va actualizar en cada mano.
@@ -130,14 +114,7 @@ public class Mesa {
             System.out.println("MESA " + idMesa);
             QuitarCiega();
             setMaxApuestaActual(ciegaG);
-            ActualizarIdentificacion();
 
-            /** Repartir cartas
-             * Esto se repite cada mano a todos los jugadores que hay en la mesa. Junto con las cartas necesito pasarle a jugador
-             * las opciones que puede tomar y la cantidad que debe apostar para poder hacerlo.
-             * El jugdor nos devuelve la decision que ha tomado junto a la cantidad apostada, si es que hay.
-             * Todos los jugadores que sigan en la mano se meten en un array de jugadores con el que llamo al metodo flop.
-             */
 
             RepartirCartas();
             DecEtapa();
@@ -205,7 +182,8 @@ public class Mesa {
                 MuestraContenido();
             }
 
-            //Dejar los atributos de mesa y los atributod de jugadores que corresponda listos para jugar otra mano desde 0.
+            //Dejar los atributos de mesa y los atributos de jugadores que corresponda listos para jugar otra mano desde 0.
+
             for (int i = 0; i < jugadoresMesa.size(); i++) {
                 jugadoresMesa.get(i).resetFichasApostadas();
             }
@@ -214,10 +192,13 @@ public class Mesa {
                 jugadoresMesa.get(i).setActivo(true);
             }
             ActualizarMesa();
+            System.out.println("MESA DESPUES DE EMIMINAR JUGADORES");
+            MuestraContenido();
             ActualizaridCiega();
             bote=0;
             maxManos++;
             cartasComunes = new ArrayList<Carta>();
+            ResetCartasComunes();
            // ActualizarFitness();
 
             System.out.println(maxManos);
@@ -265,6 +246,12 @@ public class Mesa {
 
     }
 
+    public void ResetCartasComunes(){
+        for (int i = 0; i < jugadoresMesa.size(); i++) {
+            jugadoresMesa.get(i).setCartasComunes(cartasComunes);
+        }
+    }
+
     public void RepartirCartas() {
 
 
@@ -303,6 +290,8 @@ public class Mesa {
     public void DecidirGanador() {
         int mano = 0;
         int ganador = 0;
+        double ponderacion =0.0;
+
         for (int i = 0; i < jugadoresMesa.size(); i++) {
             if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() >= mano)) {
                 mano = jugadoresMesa.get(i).getValorMano();
@@ -310,13 +299,20 @@ public class Mesa {
         }
 
         for (int i = 0; i < jugadoresMesa.size(); i++) {
-            if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() == mano)) {
-                ganador++;
+            if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() == mano) && (jugadoresMesa.get(i).getPonderacion())>=ponderacion){
+                ponderacion=jugadoresMesa.get(i).getPonderacion();
             }
         }
 
         for (int i = 0; i < jugadoresMesa.size(); i++) {
-            if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() == mano)) {
+            if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() == mano) && (jugadoresMesa.get(i).getPonderacion())==ponderacion){
+                ganador++;
+            }
+        }
+
+
+        for (int i = 0; i < jugadoresMesa.size(); i++) {
+            if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() == mano)&& (jugadoresMesa.get(i).getPonderacion())==ponderacion) {
                 jugadoresMesa.get(i).setFichas(jugadoresMesa.get(i).getFichas()+bote/ganador);
                 jugadoresMesa.get(i).setManosGanadas(jugadoresMesa.get(i).getManosGanadas()+1);
                 jugadoresMesa.get(i).setFichasGanadas(jugadoresMesa.get(i).getFichasGanadas()+(bote/ganador));
@@ -358,7 +354,7 @@ public class Mesa {
         for(int i=0;i<jugadoresMesa.size();i++){
             if(jugadoresMesa.get(i).getFichas()<1){
                 jugadoresMesa.remove(i);
-                i=0;
+                i=-1;
             }
         }
     }
@@ -574,6 +570,25 @@ public class Mesa {
         return aux;
 
     }
+    public int getApuestaMaxima(int i){
+        int aux=0;
+        if(jugadoresMesa.get(i).getFichas()>=bote){
+            aux=bote;
+        }else{
+            aux=jugadoresMesa.get(i).getFichas();
+        }
+        return aux;
+    }
+
+    public int getApuestaMinima(int i){
+        int aux=0;
+        if(maxApuestaActual==0){
+            aux=ciegaG;
+        }else{
+            aux=maxApuestaActual-jugadoresMesa.get(i).getFichasApostadas();
+        }
+        return aux;
+    }
 
     public void DecEtapa() {
         int subidas = 0;
@@ -584,7 +599,7 @@ public class Mesa {
         for (int i = 0; i < jugadoresMesa.size(); i++) {
 
             if (jugadoresMesa.get(sigLibre % jugadoresMesa.size()).isActivo()) {
-                decision = jugadoresMesa.get(sigLibre % jugadoresMesa.size()).tomarDecision(ciegaG,bote,ciegaG,getMP(jugadoresMesa.size()),getMM(jugadoresMesa.size()),getMMU(jugadoresMesa.size()),getMP(jugadoresMesa.size()),getDM(jugadoresMesa.size()),getDMU(jugadoresMesa.size()));
+                decision = jugadoresMesa.get(sigLibre % jugadoresMesa.size()).tomarDecision(getApuestaMinima(sigLibre % jugadoresMesa.size()),getApuestaMaxima(sigLibre % jugadoresMesa.size()),ciegaG,getMP(jugadoresMesa.size()),getMM(jugadoresMesa.size()),getMMU(jugadoresMesa.size()),getMP(jugadoresMesa.size()),getDM(jugadoresMesa.size()),getDMU(jugadoresMesa.size()));
 
                 if (decision > 1 && subidas < 3) {
                     decision = decision + maxApuestaActual;
@@ -620,17 +635,21 @@ public class Mesa {
 
                     } else {
                         int aux = maxApuestaActual - jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas();
-                        //System.out.println("Jugador " + sigLibre % 8 + " Iguala la apuesta actual ");
-                        //Aumentar bote
-                        AumentarBote(aux);
-                        //System.out.println("bote " + bote);
-                        //igualar la apuesta minima
-                        //primero actualizo las fichas que ha apostado el jugador
-                        jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichasApostadas(aux);
-                        jugadoresMesa.get(sigLibre % jugadoresMesa.size()).settotalFichasApostadas(aux);
-                        //Ahora quito las fichas necesarias a jugador
-                        //Fichas que tiene el jugador -(diferencia entre la maxima apuesta de la mano y la apuesta actual de jugador)
-                        jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas() - aux);
+                        if(aux>jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas()) {
+                            aux=jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas();
+                        }
+                            //int aux = maxApuestaActual - jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas();
+                            //System.out.println("Jugador " + sigLibre % 8 + " Iguala la apuesta actual ");
+                            //Aumentar bote
+                            AumentarBote(aux);
+                            //System.out.println("bote " + bote);
+                            //igualar la apuesta minima
+                            //primero actualizo las fichas que ha apostado el jugador
+                            jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichasApostadas(aux);
+                            jugadoresMesa.get(sigLibre % jugadoresMesa.size()).settotalFichasApostadas(aux);
+                            //Ahora quito las fichas necesarias a jugador
+                            //Fichas que tiene el jugador -(diferencia entre la maxima apuesta de la mano y la apuesta actual de jugador)
+                            jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas() - aux);
 
                     }
 
