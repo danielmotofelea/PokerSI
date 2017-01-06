@@ -1,16 +1,18 @@
-package pokerSI;
 
-import net.sourceforge.jFuzzyLogic.FIS;
-import net.sourceforge.jFuzzyLogic.FunctionBlock;
-import net.sourceforge.jFuzzyLogic.defuzzifier.DefuzzifierCenterOfGravity;
-import net.sourceforge.jFuzzyLogic.membership.*;
-import net.sourceforge.jFuzzyLogic.rule.*;
-import net.sourceforge.jFuzzyLogic.ruleAccumulationMethod.RuleAccumulationMethodMax;
-import net.sourceforge.jFuzzyLogic.ruleActivationMethod.RuleActivationMethodMin;
-import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodAndMin;
-import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodOrMax;
+package PokerSI;
 
-import java.util.* ;
+        import net.sourceforge.jFuzzyLogic.FIS;
+        import net.sourceforge.jFuzzyLogic.FunctionBlock;
+        import net.sourceforge.jFuzzyLogic.defuzzifier.DefuzzifierCenterOfGravity;
+        import net.sourceforge.jFuzzyLogic.membership.*;
+        import net.sourceforge.jFuzzyLogic.plot.JDialogFis;
+        import net.sourceforge.jFuzzyLogic.rule.*;
+        import net.sourceforge.jFuzzyLogic.ruleAccumulationMethod.RuleAccumulationMethodMax;
+        import net.sourceforge.jFuzzyLogic.ruleActivationMethod.RuleActivationMethodMin;
+        import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodAndMin;
+        import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodOrMax;
+
+        import java.util.* ;
 public class Jugador {
 
     /** Habría que añadir un atributo que indique que tipo de mano tiene el jugador y pasarsela a la mesa*/
@@ -41,6 +43,7 @@ public class Jugador {
         this.totalFichasApostadas = 0;
         this.activo = true;
         this.valorMano = 1;
+
         this.gen = new double[11];                     /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
         this.cartasEnMano = new Carta[2] ;             /** Las dos cartas en mano las tomamos como enteros*/
@@ -117,7 +120,7 @@ public class Jugador {
     }
 
     public void setIdentificacion(int[] identificacion) {
-        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length-1);
+        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length);
     }
 
     public void setFitness(double valor){
@@ -154,40 +157,44 @@ public class Jugador {
     public void setActivo( boolean activo){
         this.activo = activo;
     }
-        public int getValorMano() {
-                return valorMano;
-            }
+    public int getValorMano() {
+        return valorMano;
+    }
 
-             public void setValorMano(int valorMano) {
-                this.valorMano = valorMano;
-            }
+    public void setValorMano(int valorMano) {
+        this.valorMano = valorMano;
+    }
 
-             public int getTotalfichasApostadas() {
-                return totalFichasApostadas;
-            }
+    public int getTotalfichasApostadas() {
+        return totalFichasApostadas;
+    }
 
-             public void settotalFichasApostadas(int totalFichasApostadas) {
-                this.totalFichasApostadas = this.totalFichasApostadas+totalFichasApostadas;
-            }
+    public void settotalFichasApostadas(int totalFichasApostadas) {
+        this.totalFichasApostadas = this.totalFichasApostadas+totalFichasApostadas;
+    }
 
-             @Override
-     public String toString() {
-                return "Jugador{" +
-                                "fichas=" + fichas +
-                                ", fichasGanadas=" + fichasGanadas +
-                                ", fichasApostadas=" + fichasApostadas +
-                                ", totalFichasApostadas=" + totalFichasApostadas +
-                                ", manosGanadas=" + manosGanadas +
-                                ", manosJugadas=" + manosJugadas +
-                                ", gen=" + Arrays.toString(gen) +
-                                ", mejorMano=" + Arrays.toString(mejorMano) +
-                                ", activo=" + activo +
-                                ", valorMano=" + valorMano +
-                                ", fitness=" + fitness +
-                                ", identificacion=" + Arrays.toString(identificacion) +
-                                ", cartasEnMano=" + Arrays.toString(cartasEnMano) +
-                                ", cartasComunes=" + cartasComunes +
-                                '}';
+    public double getPonderacion(){
+        return mejorMano[1];
+    }
+
+    @Override
+    public String toString() {
+        return "Jugador{" +
+                "fichas=" + fichas +
+                ", fichasGanadas=" + fichasGanadas +
+                ", fichasApostadas=" + fichasApostadas +
+                ", totalFichasApostadas=" + totalFichasApostadas +
+                ", manosGanadas=" + manosGanadas +
+                ", manosJugadas=" + manosJugadas +
+                ", gen=" + Arrays.toString(gen) +
+                ", mejorMano=" + Arrays.toString(mejorMano) +
+                ", activo=" + activo +
+                ", valorMano=" + valorMano +
+                ", fitness=" + fitness +
+                ", identificacion=" + Arrays.toString(identificacion) +
+                ", cartasEnMano=" + Arrays.toString(cartasEnMano) +
+                ", cartasComunes=" + cartasComunes +
+                '}';
     }
 
     public void resetAtributosJugador(){
@@ -201,6 +208,14 @@ public class Jugador {
         this.cartasComunes.clear();
     }
 
+    public void resetAtributosJugador2(){
+        this.fichas = 1000;
+        this.fichasGanadas = 0;
+        this.fichasApostadas = 0;
+        this.cartasEnMano = new Carta[2];
+        this.cartasComunes.clear();
+    }
+
     /** Esta funcion unicamente se invoca cuando haya finalizado la partida ya sea en la mesa inicial o en el mesa final
      *  por lo tanto se calculara unicamente 2 veces por partida en el caso de los jugadores de la mesa final
      *  y con el valor fitness ver la evolucion de la grafica de aprendizaje que elabora la clase MAIN */
@@ -209,7 +224,7 @@ public class Jugador {
 
         if((manosJugadas != 0) && (totalFichasApostadas != 0))
             fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)fichasApostadas)) / 100.0 ;
-        //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
+            //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
         else
             fitness = 0;
         return fitness;
@@ -230,7 +245,7 @@ public class Jugador {
 
         int numCartas = manoProvisional.size();
 
-        int contEscalera = 1;         /** Para tener escalera ---> contEscalera > 5, este contador si es necesario para llevar la cuenta de cuantas cartas consecutivas llevamos */
+        int contEscalera = 0;         /** Para tener escalera ---> contEscalera > 5, este contador si es necesario para llevar la cuenta de cuantas cartas consecutivas llevamos */
         boolean color = false;        /** Para tener color ---> contPicas, contCorazones, contTreboles o contDiamantes tienen que valer al menos 5 */
         boolean poker = false;        /** Para tener poker ---> alguna posicion del array debe valer 4 */
         boolean full = false;         /** Para tener full ---> pareja1 = true o pareja2 = true y contTrio = true */
@@ -251,10 +266,10 @@ public class Jugador {
         int contTreboles = 0;
         int []numeroCarta = new int[13]; /** Array que cuenta las veces que se repiten las cartas por su valor pero, valor carta = posicion + 2*/
         int numeroDeLaCarta;
-        int contEscCor = 1;
-        int contEscDiam = 1;
-        int contEscPic = 1;
-        int contEscTreb = 1;
+        int contEscCor = 0;
+        int contEscDiam = 0;
+        int contEscPic = 0;
+        int contEscTreb = 0;
 
         int valorPareja1 = 0;
         int valorPareja2 = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
@@ -335,33 +350,32 @@ public class Jugador {
                     if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 1))
                         contEscCor++;
                     else
-                        contEscCor = 1;
+                        contEscCor = 0;
 
                     if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 2))
                         contEscPic++;
                     else
-                        contEscPic = 1;
+                        contEscPic = 0;
 
                     if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 3))
                         contEscDiam++;
                     else
-                        contEscDiam = 1;
+                        contEscDiam = 0;
 
                     if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 4))
                         contEscTreb++;
                     else
-                        contEscTreb = 1;
+                        contEscTreb = 0;
 
                     if(contEscalera == 5) {
                         escalera = true;
                         valorEscaleraFinal = valorSiguiente;
-
                         if((contEscPic>5) || (contEscDiam>5) || (contEscCor>5) || (contEscTreb > 5))
                             escaleraColor = true;
                     }
                 }
                 else if(!escalera)
-                    contEscalera = 1;
+                    contEscalera = 0;
             }
 
             /** VAMOS A TRATAR UN CASO ESPECIAL: Vemos si la ultima carta es un AS, si lo es buscamos la escalera A,2,3,4,5
@@ -485,7 +499,6 @@ public class Jugador {
 
         mejorMano[1] = ponderarMano(valorCartaAlta, cor, pic, diam, valorPareja1, valorPareja2,
                 valorPoker, valorTrio, valorFull,valorColor, valorEscaleraFinal);
-
         /** Ya tenemos el valor de nuestra mejor mano pero para apostar debemos hacer una consulta al sistema borroso
          *  y tomar una decision, de si apostar, pasar o irse, todo esto dependiendo de los jugadores que haya aun en la mesa
          *  cuantas fichas tengamos y sobre todo nuestra mano */
@@ -501,7 +514,7 @@ public class Jugador {
 
 
     public double ponderarMano(int valorCartaAlta, boolean cor, boolean pic, boolean diam, int valorPareja1, int valorPareja2,
-                            int valorPoker, int valorTrio, int []valorFull,int valorColor, int valorEscaleraFinal){
+                               int valorPoker, int valorTrio, int []valorFull,int valorColor, int valorEscaleraFinal){
 
         double ponderacion = 0.0;
 
@@ -520,7 +533,7 @@ public class Jugador {
 
         int valorManoComun = 1;
 
-        int contEscaleraComun = 1;
+        int contEscaleraComun = 0;
         boolean colorComun = false;
         boolean pokerComun = false;
         boolean fullComun = false;
@@ -541,10 +554,10 @@ public class Jugador {
         int contTrebolesComun = 0;
         int []numeroCartaComun = new int[13]; /** Array que cuenta las veces que se repiten las cartas por su valor pero, valor carta = posicion + 2*/
         int numeroDeLaCartaComun;
-        int contEscCorComun = 1;
-        int contEscDiamComun = 1;
-        int contEscPicComun = 1;
-        int contEscTrebComun = 1;
+        int contEscCorComun = 0;
+        int contEscDiamComun = 0;
+        int contEscPicComun = 0;
+        int contEscTrebComun = 0;
 
         int valorPareja1Comun = 0;
         int valorPareja2Comun = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
@@ -635,22 +648,22 @@ public class Jugador {
                     if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 1))
                         contEscCorComun++;
                     else
-                        contEscCorComun = 1;
+                        contEscCorComun = 0;
 
                     if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 2))
                         contEscPicComun++;
                     else
-                        contEscPicComun = 1;
+                        contEscPicComun = 0;
 
                     if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 3))
                         contEscDiamComun++;
                     else
-                        contEscDiamComun = 1;
+                        contEscDiamComun = 0;
 
                     if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 4))
                         contEscTrebComun++;
                     else
-                        contEscTrebComun = 1;
+                        contEscTrebComun = 0;
 
                     if(contEscaleraComun == 5) {
                         escaleraComun = true;
@@ -660,12 +673,12 @@ public class Jugador {
                     }
                 }
                 else if(!escaleraComun)
-                    contEscaleraComun = 1;
+                    contEscaleraComun = 0;
 
             }
 
             /**
-                A continuación, comprobamos el caso especial de la escalera A-2-3-4-5
+             A continuación, comprobamos el caso especial de la escalera A-2-3-4-5
              */
             if((cartasComunes.get(i).getValor() == 14) && (cartasComunes.get(0).getValor() == 2) &&
                     (cartasComunes.get(1).getValor() == 3) && (cartasComunes.get(2).getValor() == 4) &&
@@ -972,7 +985,7 @@ public class Jugador {
         //MembershipFunction mMala = new MembershipFunctionPieceWiseLinear(malaX, malaY);    TODO borrar si funciona la grafica
         //MembershipFunction mBuena = new MembershipFunctionPieceWiseLinear(buenaX, buenaY); TODO borrar si funciona la grafica
         MembershipFunction mMala = new MembershipFunctionTriangular(new Value(9), new Value(108), new Value(208));
-        MembershipFunction mBuena = new MembershipFunctionTriangular(new Value(205), new Value(303), new Value(406));
+        MembershipFunction mBuena = new MembershipFunctionTriangular(new Value(114), new Value(303), new Value(406));
         MembershipFunction mMuyBuena = new MembershipFunctionPieceWiseLinear(mBuenaX, mBuenaY);
 
         LinguisticTerm ltMuyMala = new LinguisticTerm("muyMala", mMuyMala);
@@ -1004,7 +1017,6 @@ public class Jugador {
                         -si obtenemos un valor de 1'9, se considerará Igualar o subir en función de las reglas
                         -si obtenemos un valor de 3'7, se tomará una subida de 3 veces la ciega grande
             Formula que determinará el retorno: apuestaMinima + (int) fis.getVariable("decision").getValue()*ciegaGrande
-
          */
 
         Value pniX[] = { new Value(0), new Value(1) };
@@ -1018,13 +1030,13 @@ public class Jugador {
         subidaMaxima = (apuestaMaxima - apuestaMinima) / ciegaGrande;
         Value subX[] = { new Value(1), new Value(2), new Value(subidaMaxima) };
         Value subY[] = { new Value(0), new Value(1), new Value(1) };
-        if(subidaMaxima == 0) //La subida no llega a 2 ciegas: ciega de 50, bote de 75 -> Puede subir 1 ciega
+        if(subidaMaxima<2) //La subida no llega a 2 ciegas: ciega de 50, bote de 75 -> Puede subir 1 ciega
         {
             /**
              * Se solapara esta grafica completamente con la de Igualar, se decidira con las reglas
              */
-            subX = null;
-            subY = null;
+            subX = new Value[2];
+            subY = new Value[2];
             Value subX2[] = { new Value(1), new Value(2) };
             Value subY2[] = { new Value(1), new Value(0) };
             System.arraycopy(subX2, 0, subX, 0, subX2.length);
@@ -1275,7 +1287,7 @@ public class Jugador {
             }
         }
 
-        pruebaBorroso(ruleBlockHashMap, fis); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
+        //pruebaBorroso(ruleBlockHashMap, fis); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
 
 
         /**
@@ -1300,4 +1312,10 @@ public class Jugador {
         jdf.repaint();
 
     }
+
+
+
+   public int tomarDecision(){
+        return 0;
+   }
 }
