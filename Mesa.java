@@ -104,22 +104,23 @@ public class Mesa {
 
         b = new Baraja();
         ActualizarIdentificacion();
-        while(jugadoresMesa.size()!=1 && maxManos<50){  /** Mientras haya mas de un jugador en la mesa se van a jugar manos */
+        System.out.println("MESA " + idMesa);
+        while(jugadoresMesa.size()!=1 && maxManos<300){  /** Mientras haya mas de un jugador en la mesa se van a jugar manos */
         b=new Baraja();
 
             /** Quitar ciegas a los jugadores que toca
              * Dicho indice se va actualizar en cada mano.
              */
 
-            System.out.println("MESA " + idMesa);
+
             QuitarCiega();
             setMaxApuestaActual(ciegaG);
 
 
             RepartirCartas();
             DecEtapa();
-            System.out.println("PREFLOP");
-            MuestraContenido();
+            //System.out.println("PREFLOP");
+            //MuestraContenido();
             setMaxApuestaActual(0);
 
             for (int i = 0; i < jugadoresMesa.size(); i++) {
@@ -130,8 +131,8 @@ public class Mesa {
                 ObtenerCartasComunes(3);
                 RepartirCartasComunes();
                 DecEtapa();
-                System.out.println("FLOP");
-                MuestraContenido();
+               // System.out.println("FLOP");
+               // MuestraContenido();
                 setMaxApuestaActual(0);
 
                 for (int i = 0; i < jugadoresMesa.size(); i++) {
@@ -142,8 +143,8 @@ public class Mesa {
                     ObtenerCartasComunes(1);
                     RepartirCartasComunes();
                     DecEtapa();
-                    System.out.println("TURN");
-                    MuestraContenido();
+                   // System.out.println("TURN");
+                   //MuestraContenido();
                     setMaxApuestaActual(0);
 
                     for (int i = 0; i < jugadoresMesa.size(); i++) {
@@ -153,33 +154,37 @@ public class Mesa {
                         ObtenerCartasComunes(1);
                         RepartirCartasComunes();
                         DecEtapa();
-                        System.out.println("RIVER");
-                        MuestraContenido();
+                       // System.out.println("RIVER");
+                       // MuestraContenido();
                         if (NumActivos() > 1) {
                             DecidirGanador();
-                            System.out.println("Contenido jugadores despues dedecidir Ganador");
-                            MuestraContenido();
+                            //System.out.println("Contenido jugadores despues dedecidir Ganador");
+                           // MuestraContenido();
                         } else {
                             Ganador();
-                            System.out.println("Contenido jugadores despues dedecidir Ganador");
-                            MuestraContenido();
+                           // System.out.println("Contenido jugadores despues dedecidir Ganador");
+                           // System.out.println(" Fichas totales: "+sumaFichas());
+                          //  MuestraContenido();
                         }
 
                     } else {
                         Ganador();
-                        System.out.println("Contenido jugadores despues dedecidir Ganador");
-                        MuestraContenido();
+                        //System.out.println("Contenido jugadores despues dedecidir Ganador");
+                        //System.out.println(" Fichas totales: "+sumaFichas());
+                       // MuestraContenido();
                     }
                 } else {
                     Ganador();
-                    System.out.println("Contenido jugadores despues dedecidir Ganador");
-                    MuestraContenido();
+                    //System.out.println("Contenido jugadores despues dedecidir Ganador");
+                    //System.out.println(" Fichas totales: "+sumaFichas());
+                    //MuestraContenido();
                 }
             } else {
                 Ganador();
                 ActualizarManosJugadas();
-                System.out.println("Contenido jugadores despues dedecidir Ganador");
-                MuestraContenido();
+                //System.out.println("Contenido jugadores despues dedecidir Ganador");
+               // System.out.println(" Fichas totales: "+sumaFichas());
+                //MuestraContenido();
             }
 
             //Dejar los atributos de mesa y los atributos de jugadores que corresponda listos para jugar otra mano desde 0.
@@ -191,20 +196,24 @@ public class Mesa {
             for (int i = 0; i < jugadoresMesa.size(); i++) {
                 jugadoresMesa.get(i).setActivo(true);
             }
+
             ActualizarMesa();
-            System.out.println("MESA DESPUES DE EMIMINAR JUGADORES");
-            MuestraContenido();
+           // System.out.println(" Fichas totales: "+sumaFichas());
+            //System.out.println("MESA DESPUES DE EMIMINAR JUGADORES");
+           // MuestraContenido();
             ActualizaridCiega();
+
             bote=0;
             maxManos++;
             cartasComunes = new ArrayList<Carta>();
             ResetCartasComunes();
-           // ActualizarFitness();
+            ActualizarFitness();
 
-            System.out.println(maxManos);
+            //System.out.println(maxManos);
         }
+        System.out.println("FINAL DE LA MESA. Fichas totales: "+sumaFichas());
+        MuestraContenido();
 
-        //}
 
         /**
          * Se devuelve el ganador de la mesa, que esta en la posicion 0 ya que se han eliminado los demas.
@@ -217,29 +226,85 @@ public class Mesa {
 
     }
 
+    public int sumaFichas(){
+        int fichas=0;
+        for(int i=0;i<jugadoresMesa.size();i++){
+            fichas=fichas+jugadoresMesa.get(i).getFichas();
+        }
+        return fichas;
+    }
 
 
     public void QuitarCiega() {
 
         if (idCiega == jugadoresMesa.size() - 1) {
-            jugadoresMesa.get(jugadoresMesa.size() - 1).setFichas(jugadoresMesa.get(jugadoresMesa.size() - 1).getFichas() - ciegaP);
-            jugadoresMesa.get(jugadoresMesa.size() - 1).settotalFichasApostadas(ciegaP);
-            jugadoresMesa.get(jugadoresMesa.size() - 1).setFichasApostadas(ciegaP);
-            AumentarBote(ciegaP);
-            jugadoresMesa.get(0).setFichas(jugadoresMesa.get(0).getFichas() - ciegaG);
-            jugadoresMesa.get(0).setFichasApostadas(ciegaG);
-            jugadoresMesa.get(0).settotalFichasApostadas(ciegaG);
-            AumentarBote(ciegaG);
+
+            if(jugadoresMesa.get(jugadoresMesa.size()-1).getFichas()>=ciegaP){
+                AumentarBote(ciegaP);
+                jugadoresMesa.get(jugadoresMesa.size()-1).settotalFichasApostadas(ciegaP);
+                jugadoresMesa.get(jugadoresMesa.size()-1).setFichasApostadas(ciegaP);
+                jugadoresMesa.get(jugadoresMesa.size()-1).setFichas(jugadoresMesa.get(jugadoresMesa.size() - 1).getFichas() - ciegaP);
+
+            }else{
+                AumentarBote(jugadoresMesa.get(jugadoresMesa.size()-1).getFichas());
+                jugadoresMesa.get(jugadoresMesa.size()-1).settotalFichasApostadas(jugadoresMesa.get(jugadoresMesa.size()-1).getFichas());
+                jugadoresMesa.get(jugadoresMesa.size()-1).setFichasApostadas(jugadoresMesa.get(jugadoresMesa.size()-1).getFichas());
+               // jugadoresMesa.get(jugadoresMesa.size()-1).setFichas(jugadoresMesa.get(jugadoresMesa.size()-1).getFichas() - jugadoresMesa.get(jugadoresMesa.size() - 1).getFichas());
+                jugadoresMesa.get(jugadoresMesa.size()-1).setFichas(0);
+
+            }
+
+            if(jugadoresMesa.get(0).getFichas()>=ciegaG){
+                AumentarBote(ciegaG);
+                jugadoresMesa.get(0).setFichasApostadas(ciegaG);
+                jugadoresMesa.get(0).settotalFichasApostadas(ciegaG);
+                jugadoresMesa.get(0).setFichas(jugadoresMesa.get(0).getFichas()-ciegaG);
+
+
+            }else{
+                AumentarBote(jugadoresMesa.get(0).getFichas());
+                jugadoresMesa.get(0).setFichasApostadas(jugadoresMesa.get(0).getFichas());
+                jugadoresMesa.get(0).settotalFichasApostadas(jugadoresMesa.get(0).getFichas());
+                //jugadoresMesa.get(0).setFichas(jugadoresMesa.get(0).getFichas() - jugadoresMesa.get(0).getFichas());
+                jugadoresMesa.get(0).setFichas(0);
+            }
+
             idCiega = 0;
         } else {
-            jugadoresMesa.get(idCiega).setFichas(jugadoresMesa.get(idCiega).getFichas() - ciegaP);
-            jugadoresMesa.get(idCiega).setFichasApostadas(ciegaP);
-            jugadoresMesa.get(idCiega).settotalFichasApostadas(ciegaP);
-            AumentarBote(ciegaP);
-            jugadoresMesa.get(idCiega + 1).setFichas(jugadoresMesa.get(idCiega + 1).getFichas() - ciegaG);
-            jugadoresMesa.get(idCiega + 1).setFichasApostadas(ciegaG);
-            jugadoresMesa.get(idCiega + 1).settotalFichasApostadas(ciegaG);
-            AumentarBote(ciegaG);
+
+            if(jugadoresMesa.get(idCiega).getFichas()>=ciegaP){
+                AumentarBote(ciegaP);
+                jugadoresMesa.get(idCiega).setFichasApostadas(ciegaP);
+                jugadoresMesa.get(idCiega).settotalFichasApostadas(ciegaP);
+                jugadoresMesa.get(idCiega).setFichas(jugadoresMesa.get(idCiega).getFichas() - ciegaP);
+
+
+            }else{
+                AumentarBote(jugadoresMesa.get(idCiega).getFichas());
+                jugadoresMesa.get(idCiega).setFichasApostadas(jugadoresMesa.get(idCiega).getFichas());
+                jugadoresMesa.get(idCiega).settotalFichasApostadas(jugadoresMesa.get(idCiega).getFichas());
+                //jugadoresMesa.get(idCiega).setFichas(jugadoresMesa.get(idCiega).getFichas() - jugadoresMesa.get(idCiega).getFichas());
+                jugadoresMesa.get(idCiega).setFichas(0);
+
+
+            }
+
+            if( jugadoresMesa.get(idCiega + 1).getFichas()>=ciegaG){
+                AumentarBote(ciegaG);
+                jugadoresMesa.get(idCiega + 1).setFichasApostadas(ciegaG);
+                jugadoresMesa.get(idCiega + 1).settotalFichasApostadas(ciegaG);
+                jugadoresMesa.get(idCiega + 1).setFichas(jugadoresMesa.get(idCiega + 1).getFichas() - ciegaG);
+
+
+            }else{
+                AumentarBote(jugadoresMesa.get(idCiega + 1).getFichas());
+                jugadoresMesa.get(idCiega + 1).setFichasApostadas( jugadoresMesa.get(idCiega + 1).getFichas());
+                jugadoresMesa.get(idCiega + 1).settotalFichasApostadas(jugadoresMesa.get(idCiega + 1).getFichas());
+                //jugadoresMesa.get(idCiega + 1).setFichas(jugadoresMesa.get(idCiega + 1).getFichas() -  jugadoresMesa.get(idCiega + 1).getFichas());
+                jugadoresMesa.get(idCiega + 1).setFichas(0);
+
+            }
+
             idCiega++;
         }
 
@@ -291,6 +356,8 @@ public class Mesa {
         int mano = 0;
         int ganador = 0;
         double ponderacion =0.0;
+        boolean aux=false;
+        boolean aux2=false;
 
         for (int i = 0; i < jugadoresMesa.size(); i++) {
             if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() >= mano)) {
@@ -313,23 +380,48 @@ public class Mesa {
 
         for (int i = 0; i < jugadoresMesa.size(); i++) {
             if (jugadoresMesa.get(i).isActivo() && (jugadoresMesa.get(i).getValorMano() == mano)&& (jugadoresMesa.get(i).getPonderacion())==ponderacion) {
+                aux=true;
+                if(bote%ganador!=0 && !aux2){
+                    aux2=true;
+                    //System.out.println("Se pierden "+bote%ganador+" Fichas");
+                    jugadoresMesa.get(i).setFichas(jugadoresMesa.get(i).getFichas()+(bote%ganador));
+                    jugadoresMesa.get(i).setFichasGanadas(jugadoresMesa.get(i).getFichasGanadas()+(bote%ganador));
+                }
                 jugadoresMesa.get(i).setFichas(jugadoresMesa.get(i).getFichas()+bote/ganador);
-                jugadoresMesa.get(i).setManosGanadas(jugadoresMesa.get(i).getManosGanadas()+1);
                 jugadoresMesa.get(i).setFichasGanadas(jugadoresMesa.get(i).getFichasGanadas()+(bote/ganador));
+                if(ganador==1)
+                jugadoresMesa.get(i).setManosGanadas(jugadoresMesa.get(i).getManosGanadas()+1);
             }
+        }
+
+        if(!aux){
+            //el bote se lo lleva la ciega grande.
+            jugadoresMesa.get(idCiega).setFichas(jugadoresMesa.get(idCiega).getFichas()+bote);
+            jugadoresMesa.get(idCiega).setFichasGanadas(jugadoresMesa.get(idCiega).getFichasGanadas()+bote);
+            if(ganador==1)
+            jugadoresMesa.get(idCiega).setManosGanadas(jugadoresMesa.get(idCiega).getManosGanadas()+1);
         }
 
 
     }
 
     public void Ganador() {
+        boolean aux=false;
         for (int i = 0; i < jugadoresMesa.size(); i++) {
             if (jugadoresMesa.get(i).isActivo()) {
+                aux=true;
                 jugadoresMesa.get(i).setFichas(jugadoresMesa.get(i).getFichas()+bote);
                 jugadoresMesa.get(i).setFichasGanadas(jugadoresMesa.get(i).getFichasGanadas()+bote);
                 jugadoresMesa.get(i).setManosGanadas(jugadoresMesa.get(i).getManosGanadas()+1);
             }
         }
+        if(!aux){
+            //el bote se lo lleva la ciega grande.
+            jugadoresMesa.get(idCiega).setFichas(jugadoresMesa.get(idCiega).getFichas()+bote);
+            jugadoresMesa.get(idCiega).setFichasGanadas(jugadoresMesa.get(idCiega).getFichasGanadas()+bote);
+            jugadoresMesa.get(idCiega).setManosGanadas(jugadoresMesa.get(idCiega).getManosGanadas()+1);
+        }
+
     }
 
     public void CalcularManos(){
@@ -602,13 +694,16 @@ public class Mesa {
                 decision = jugadoresMesa.get(sigLibre % jugadoresMesa.size()).tomarDecision(getApuestaMinima(sigLibre % jugadoresMesa.size()),getApuestaMaxima(sigLibre % jugadoresMesa.size()),ciegaG,getMP(jugadoresMesa.size()),getMM(jugadoresMesa.size()),getMMU(jugadoresMesa.size()),getMP(jugadoresMesa.size()),getDM(jugadoresMesa.size()),getDMU(jugadoresMesa.size()));
 
                 if (decision > 1 && subidas < 3) {
-                    decision = decision + maxApuestaActual;
+                    if((decision+maxApuestaActual)<jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas())
+                        decision = decision + maxApuestaActual;
+                    else
+                        decision=jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas();
                     subidas++;
                     i = 0;
                     //System.out.println("Jugador" + sigLibre % 8 + " Sube");
                     //quitar fichas
                     //Habria que controlar que el jugador tenga las fichas necesarias (No se si lo controla el borroso)
-                    jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas() - decision);
+                    jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas()-decision);
                     //Acrualizar fichas apostadas del jugador
                     jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichasApostadas(decision);
                     jugadoresMesa.get(sigLibre % jugadoresMesa.size()).settotalFichasApostadas(decision);
@@ -635,8 +730,9 @@ public class Mesa {
 
                     } else {
                         int aux = maxApuestaActual - jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas();
-                        if(aux>jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas()) {
+                        if(aux>jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas()){
                             aux=jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas();
+                            jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(0);
                         }
                             //int aux = maxApuestaActual - jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas();
                             //System.out.println("Jugador " + sigLibre % 8 + " Iguala la apuesta actual ");
@@ -649,8 +745,9 @@ public class Mesa {
                             jugadoresMesa.get(sigLibre % jugadoresMesa.size()).settotalFichasApostadas(aux);
                             //Ahora quito las fichas necesarias a jugador
                             //Fichas que tiene el jugador -(diferencia entre la maxima apuesta de la mano y la apuesta actual de jugador)
+                        if(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas()!=0) {
                             jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas() - aux);
-
+                        }
                     }
 
                 }
