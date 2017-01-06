@@ -35,20 +35,34 @@ public class Torneo {
      */
     public ArrayList<Jugador> realizarTorneo() {
         Mesa m;
-        ArrayList<Jugador> jugadoresMesa = new ArrayList<Jugador>();
+        //ArrayList<Jugador> jugadoresMesa = new ArrayList<Jugador>();
         int posOtrosJug=8; //Guardara la posicion donde empezara a coger los jugadores no finalistas para la siguiente mesa
 
         for (int i = 0; i < 8; i++) {
+            ArrayList<Jugador> jugadoresMesa = new ArrayList<Jugador>();
+
             jugadoresMesa.add(participantes.get(i));//Los 8 primeros jugadores del ArrayList son los finalistas de la generación anterior.
 
-            for(int j=0;j<7;j++)
+
+            for(int j=0;j<7;j++){
                 jugadoresMesa.add(participantes.get(posOtrosJug++));
-            m= new Mesa(jugadoresMesa, (i+1), idGen);//Constructor mesa: Mesa(Jugadores, idMesa, idGen); El id de la mesa va de 1 a 8
-            finalistas.add(m.jugar());//El método jugar devuelve el ganador de la mesa.
+            }
+
+                m = new Mesa(jugadoresMesa, (i + 1), idGen);//Constructor mesa: Mesa(Jugadores, idMesa, idGen); El id de la mesa va de 1 a 8
+                finalistas.add(m.jugar());//El método jugar devuelve el ganador de la mesa.
+
+        }
+        for(int i=0; i<finalistas.size();i++){
+            finalistas.get(i).resetAtributosJugador2();
         }
         m=new Mesa(finalistas,idGen);//Constructor mesa: Mesa(Jugadores, idGen);
         m.jugar();
+        //System.out.println("MESA DE LOS FINALISTAS");
+        //m.MuestraContenido();
         return finalistas;
+
+
     }
 
 }
+
