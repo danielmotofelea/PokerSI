@@ -120,7 +120,7 @@ public class Jugador {
     }
 
     public void setIdentificacion(int[] identificacion) {
-        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length-1);
+        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length);
     }
 
     public void setFitness(double valor){
