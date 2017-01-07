@@ -120,7 +120,7 @@ public class Jugador {
     }
 
     public void setIdentificacion(int[] identificacion) {
-        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length);
+        System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length-1);
     }
 
     public void setFitness(double valor){
@@ -245,7 +245,7 @@ public class Jugador {
 
         int numCartas = manoProvisional.size();
 
-        int contEscalera = 0;         /** Para tener escalera ---> contEscalera > 5, este contador si es necesario para llevar la cuenta de cuantas cartas consecutivas llevamos */
+        int contEscalera = 1;         /** Para tener escalera ---> contEscalera > 5, este contador si es necesario para llevar la cuenta de cuantas cartas consecutivas llevamos */
         boolean color = false;        /** Para tener color ---> contPicas, contCorazones, contTreboles o contDiamantes tienen que valer al menos 5 */
         boolean poker = false;        /** Para tener poker ---> alguna posicion del array debe valer 4 */
         boolean full = false;         /** Para tener full ---> pareja1 = true o pareja2 = true y contTrio = true */
@@ -266,10 +266,10 @@ public class Jugador {
         int contTreboles = 0;
         int []numeroCarta = new int[13]; /** Array que cuenta las veces que se repiten las cartas por su valor pero, valor carta = posicion + 2*/
         int numeroDeLaCarta;
-        int contEscCor = 0;
-        int contEscDiam = 0;
-        int contEscPic = 0;
-        int contEscTreb = 0;
+        int contEscCor = 1;
+        int contEscDiam = 1;
+        int contEscPic = 1;
+        int contEscTreb = 1;
 
         int valorPareja1 = 0;
         int valorPareja2 = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
@@ -350,22 +350,22 @@ public class Jugador {
                     if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 1))
                         contEscCor++;
                     else
-                        contEscCor = 0;
+                        contEscCor = 1;
 
                     if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 2))
                         contEscPic++;
                     else
-                        contEscPic = 0;
+                        contEscPic = 1;
 
                     if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 3))
                         contEscDiam++;
                     else
-                        contEscDiam = 0;
+                        contEscDiam = 1;
 
                     if(manoProvisional.get(i).getPalo() == manoProvisional.get(i+1).getPalo() && (manoProvisional.get(i).getPalo() == 4))
                         contEscTreb++;
                     else
-                        contEscTreb = 0;
+                        contEscTreb = 1;
 
                     if(contEscalera == 5) {
                         escalera = true;
@@ -375,7 +375,7 @@ public class Jugador {
                     }
                 }
                 else if(!escalera)
-                    contEscalera = 0;
+                    contEscalera = 1;
             }
 
             /** VAMOS A TRATAR UN CASO ESPECIAL: Vemos si la ultima carta es un AS, si lo es buscamos la escalera A,2,3,4,5
@@ -533,7 +533,7 @@ public class Jugador {
 
         int valorManoComun = 1;
 
-        int contEscaleraComun = 0;
+        int contEscaleraComun = 1;
         boolean colorComun = false;
         boolean pokerComun = false;
         boolean fullComun = false;
@@ -554,10 +554,10 @@ public class Jugador {
         int contTrebolesComun = 0;
         int []numeroCartaComun = new int[13]; /** Array que cuenta las veces que se repiten las cartas por su valor pero, valor carta = posicion + 2*/
         int numeroDeLaCartaComun;
-        int contEscCorComun = 0;
-        int contEscDiamComun = 0;
-        int contEscPicComun = 0;
-        int contEscTrebComun = 0;
+        int contEscCorComun = 1;
+        int contEscDiamComun = 1;
+        int contEscPicComun = 1;
+        int contEscTrebComun = 1;
 
         int valorPareja1Comun = 0;
         int valorPareja2Comun = 0;            /** Lo utilizamos para guardar el valor de la primera pareja encontrada y en el caso de que tengamos dos parejas no sean la misma*/
@@ -648,22 +648,22 @@ public class Jugador {
                     if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 1))
                         contEscCorComun++;
                     else
-                        contEscCorComun = 0;
+                        contEscCorComun = 1;
 
                     if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 2))
                         contEscPicComun++;
                     else
-                        contEscPicComun = 0;
+                        contEscPicComun = 1;
 
                     if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 3))
                         contEscDiamComun++;
                     else
-                        contEscDiamComun = 0;
+                        contEscDiamComun = 1;
 
                     if(cartasComunes.get(i).getPalo() == cartasComunes.get(i+1).getPalo() && (cartasComunes.get(i).getPalo() == 4))
                         contEscTrebComun++;
                     else
-                        contEscTrebComun = 0;
+                        contEscTrebComun = 1;
 
                     if(contEscaleraComun == 5) {
                         escaleraComun = true;
@@ -673,7 +673,7 @@ public class Jugador {
                     }
                 }
                 else if(!escaleraComun)
-                    contEscaleraComun = 0;
+                    contEscaleraComun = 1;
 
             }
 
