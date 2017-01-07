@@ -44,11 +44,10 @@ public class Main {
      * generarJugadores generará los jugadores de las generaciones 2 a n,
      * mutando y emparejando los valores del gen cuando proceda
      * @param numGeneracion
-     * @param posicion : posicion de referencia para insertar los jugadores en generacion
      * @param generacion
      * @param finalistas
      */
-    private static void generarJugadores(int numGeneracion, int posicion,ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
+    private static void generarJugadores(int numGeneracion, ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
     {
         Jugador nuevoJugador1 = new Jugador();
         Jugador nuevoJugador2 = new Jugador();
@@ -138,9 +137,9 @@ public class Main {
                 Ejemplo: i2 = 6. nuevoGen[0] a nuevoGen[5] serán de f1, 6 a 11 de f2.
              */
 
-            i2 = rand.nextInt(nuevoJugador1.getGen().length); //i2 ahora se usara para controlar el indice de corte del gen
+            i2 = rand.nextInt(nuevoGen1.length); //i2 ahora se usara para controlar el indice de corte del gen
 
-            if(i2 == nuevoJugador1.getGen().length - 1) // El corte es la ultima posición, se copia entero el gen del jugador f1
+            if(i2 == nuevoGen1.length - 1) // El corte es la ultima posición, se copia entero el gen del jugador f1
             {
                 nuevoGen1 = f1.getGen();
                 nuevoGen2 = f2.getGen();
@@ -149,12 +148,10 @@ public class Main {
                 //Para nuevoJugador1
                 System.arraycopy(f1.getGen(), 0, nuevoGen1, 0, i2); //i2 expresa longitud, no posición
                 System.arraycopy(f2.getGen(), i2, nuevoGen1, i2, nuevoGen1.length-i2); //Aquí i2 si representa una posición
-                nuevoJugador1.setGen(nuevoGen1);
 
                 //Para nuevoJugador2
                 System.arraycopy(f2.getGen(), 0, nuevoGen2, 0, i2);
                 System.arraycopy(f1.getGen(), i2, nuevoGen2, i2, nuevoGen2.length-i2);
-                nuevoJugador2.setGen(nuevoGen2);
 
             }
         }
@@ -196,9 +193,9 @@ public class Main {
                 }
 
                 if(i < 1){//primera iteracion
-                    nuevoJugador1 = finalistas.get(i1);
+                    nuevoGen1 = finalistas.get(i1).getGen();
                 }
-                else nuevoJugador2 = finalistas.get(i1);
+                else nuevoGen2 = finalistas.get(i1).getGen();
             }
         }
 
@@ -207,7 +204,7 @@ public class Main {
          */
         for (int j = 0; j < 2; j++){ //para cada jugador
 
-            for (int i = 0; i < nuevoJugador1.getGen().length; i++){ //para cada posicion del gen
+            for (int i = 0; i < nuevoGen1.length; i++){ //para cada posicion del gen
 
                 if(rand.nextDouble() < 0.001){ //Mutamos
                     //Mutación de un +-10% como máximo
@@ -215,14 +212,14 @@ public class Main {
                     /*
                         nextInt((max - min) + 1) + min, siendo max = 10 y min = - 10
                         Se divide entre 10 para dejarlo como digito decimal.
-                        Ejemplo: se genera aleatoriamente el valor 0 --> (0-10)/10 = -0.1 (por el cast)
+                        Ejemplo: se genera aleatoriamente el valor 0 --> (0-10)/100 = -0.1 (por el cast)
                                                                      --> 1.0 + (-0.1) = 0.9 (90%, reduccion del 10%)
                      */
 
                     if(j < 1){ //Toca mutar el nuevoGen1
-                        nuevoGen1[i] = nuevoGen1[i] * (1.0 + ((double) rand.nextInt(21) - 10.0) / 10.0);
+                        nuevoGen1[i] = nuevoGen1[i] * (1.0 + ((double) rand.nextInt(21) - 10.0) / 100.0);
                     }
-                    else nuevoGen2[i] = nuevoGen2[i] * (1.0 + ((double)rand.nextInt(21) - 10.0) / 10.0);
+                    else nuevoGen2[i] = nuevoGen2[i] * (1.0 + ((double)rand.nextInt(21) - 10.0) / 100.0);
                 }
             }
         }
@@ -235,8 +232,8 @@ public class Main {
         nuevoJugador1.setGen(nuevoGen1);
         nuevoJugador2.setGen(nuevoGen2);
 
-        generacion.add(posicion, nuevoJugador1);
-        generacion.add(posicion+1, nuevoJugador2);
+        generacion.add(nuevoJugador1);
+        generacion.add(nuevoJugador2);
 
     }
 
@@ -346,7 +343,7 @@ public class Main {
 
 
             for (int i = 8; i < 64; i+=2) {
-                generarJugadores(numGeneracion, i, generacion, finalistas);//Generamos 2 jugadores cada vez, y los añadimos a generacion
+                generarJugadores(numGeneracion, generacion, finalistas);//Generamos 2 jugadores cada vez, y los añadimos a generacion
             }
 
             //Ya se han generado todos los jugadores, luego se puede limpiar finalistas
