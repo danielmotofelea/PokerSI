@@ -104,7 +104,10 @@ public class Mesa {
 
         b = new Baraja();
         ActualizarIdentificacion();
-        System.out.println("MESA " + idMesa);
+        for(int i=0; i<jugadoresMesa.size();i++){
+            jugadoresMesa.get(i).resetAtributosJugador();
+        }
+        System.out.println("MESA " + idMesa+ " Generacion "+ idGenracion);
         while(jugadoresMesa.size()!=1 && maxManos<300){  /** Mientras haya mas de un jugador en la mesa se van a jugar manos */
         b=new Baraja();
 
@@ -207,7 +210,7 @@ public class Mesa {
             maxManos++;
             cartasComunes = new ArrayList<Carta>();
             ResetCartasComunes();
-            ActualizarFitness();
+            //ActualizarFitness();
 
             //System.out.println(maxManos);
         }
@@ -483,7 +486,7 @@ public class Mesa {
 
     public void ActualizarIdentificacion(){
         int []identificacion= new int[3];
-        identificacion[0]=idGenracion;
+        //identificacion[0]=idGenracion;
         identificacion[1]=idMesa;
         for (int i=0; i<jugadoresMesa.size();i++){
             identificacion[2]=i;
