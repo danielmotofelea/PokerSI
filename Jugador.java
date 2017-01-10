@@ -223,7 +223,8 @@ public class Jugador {
     public double calcularFitness(){
 
         if((manosJugadas != 0) && (totalFichasApostadas != 0))
-            fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)fichasApostadas)) / 100.0 ;
+            fitness=(((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/((double)totalFichasApostadas)))*100;
+            //fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)fichasApostadas)) / 100.0 ;
             //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
         else
             fitness = 0;
@@ -927,9 +928,12 @@ public class Jugador {
         /*
             Valores de medias y desviaciones tipicas se calculan en mesa cada vez que se elimina un jugador.
          */
-        MembershipFunction mPocas = new MembershipFunctionGaussian(new Value(mediaPocas), new Value(desvPocas));
-        MembershipFunction mMedias = new MembershipFunctionGaussian(new Value(mediaMedias), new Value(desvMedias));
-        MembershipFunction mMuchas = new MembershipFunctionGaussian(new Value(mediaMuchas), new Value(desvMuchas));
+        //MembershipFunction mPocas = new MembershipFunctionGaussian(new Value(mediaPocas), new Value(desvPocas));
+        //MembershipFunction mMedias = new MembershipFunctionGaussian(new Value(mediaMedias), new Value(desvMedias));
+       // MembershipFunction mMuchas = new MembershipFunctionGaussian(new Value(mediaMuchas), new Value(desvMuchas));
+        MembershipFunction mPocas = new MembershipFunctionTrapetzoidal( new Value(mediaPocas-desvPocas),new Value(mediaPocas*0.8),new Value(mediaPocas*1.2),new Value(mediaPocas+desvPocas));
+        MembershipFunction mMedias = new MembershipFunctionTrapetzoidal(new Value(mediaMedias-desvMedias),new Value(mediaMedias*0.8),new Value(mediaMedias*1.2),new Value(mediaMedias+desvMedias));
+        MembershipFunction mMuchas = new MembershipFunctionTrapetzoidal(new Value(mediaMuchas-desvMuchas),new Value(mediaMuchas-desvMuchas*0.5),new Value(mediaMuchas+desvMuchas),new Value(mediaMuchas+desvMuchas+1));
         LinguisticTerm ltPocas = new LinguisticTerm("pocas", mPocas);
         LinguisticTerm ltMedias = new LinguisticTerm("medias", mMedias);
         LinguisticTerm ltMuchas = new LinguisticTerm("muchas", mMuchas);
