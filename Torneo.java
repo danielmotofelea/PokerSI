@@ -52,10 +52,14 @@ public class Torneo {
                 finalistas.add(m.jugar());//El método jugar devuelve el ganador de la mesa.
 
         }
+        
         for(int i=0; i<finalistas.size();i++){
-            finalistas.get(i).resetAtributosJugador2();
+            finalistas.get(i).calcularFitnessMesa();
         }
         m=new Mesa(finalistas,idGen);//Constructor mesa: Mesa(Jugadores, idGen);
+        for(int i=0; i<finalistas.size();i++){
+            finalistas.get(i).gradoDeSoporte(i,idGen);
+        }
         m.jugar();
         //System.out.println("MESA DE LOS FINALISTAS");
         //m.MuestraContenido();
