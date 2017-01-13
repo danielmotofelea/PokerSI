@@ -11,7 +11,8 @@ package PokerSI;
         import net.sourceforge.jFuzzyLogic.ruleActivationMethod.RuleActivationMethodMin;
         import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodAndMin;
         import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodOrMax;
-
+        import java.io.FileWriter;
+        import java.io.PrintWriter;
         import java.util.* ;
 public class Jugador {
 
