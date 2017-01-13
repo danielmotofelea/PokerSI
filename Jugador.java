@@ -1,5 +1,5 @@
 
-package PokerSI;
+package pokerSI;
 
         import net.sourceforge.jFuzzyLogic.FIS;
         import net.sourceforge.jFuzzyLogic.FunctionBlock;
