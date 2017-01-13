@@ -105,9 +105,14 @@ public class Mesa {
         b = new Baraja();
         ActualizarIdentificacion();
         for(int i=0; i<jugadoresMesa.size();i++){
-            jugadoresMesa.get(i).resetAtributosJugador();
+            jugadoresMesa.get(i).resetAtributosJugador2();
         }
         System.out.println("MESA " + idMesa+ " Generacion "+ idGenracion);
+        System.out.println("PRINCIPIo MESA");
+        for(int i=0;i<jugadoresMesa.size();i++){
+            System.out.println(jugadoresMesa.get(i).toString());
+        }
+        System.out.println("FINAL MESA");
         while(jugadoresMesa.size()!=1 && maxManos<300){  /** Mientras haya mas de un jugador en la mesa se van a jugar manos */
         b=new Baraja();
 
@@ -122,8 +127,8 @@ public class Mesa {
 
             RepartirCartas();
             DecEtapa();
-            //System.out.println("PREFLOP");
-            //MuestraContenido();
+           // System.out.println("PREFLOP");
+           // MuestraContenido();
             setMaxApuestaActual(0);
 
             for (int i = 0; i < jugadoresMesa.size(); i++) {
@@ -134,8 +139,8 @@ public class Mesa {
                 ObtenerCartasComunes(3);
                 RepartirCartasComunes();
                 DecEtapa();
-               // System.out.println("FLOP");
-               // MuestraContenido();
+              // System.out.println("FLOP");
+              // MuestraContenido();
                 setMaxApuestaActual(0);
 
                 for (int i = 0; i < jugadoresMesa.size(); i++) {
@@ -147,7 +152,7 @@ public class Mesa {
                     RepartirCartasComunes();
                     DecEtapa();
                    // System.out.println("TURN");
-                   //MuestraContenido();
+                  /// MuestraContenido();
                     setMaxApuestaActual(0);
 
                     for (int i = 0; i < jugadoresMesa.size(); i++) {
@@ -157,23 +162,23 @@ public class Mesa {
                         ObtenerCartasComunes(1);
                         RepartirCartasComunes();
                         DecEtapa();
-                       // System.out.println("RIVER");
+                        //System.out.println("RIVER");
                        // MuestraContenido();
                         if (NumActivos() > 1) {
                             DecidirGanador();
                             //System.out.println("Contenido jugadores despues dedecidir Ganador");
-                           // MuestraContenido();
+                            //MuestraContenido();
                         } else {
                             Ganador();
                            // System.out.println("Contenido jugadores despues dedecidir Ganador");
-                           // System.out.println(" Fichas totales: "+sumaFichas());
-                          //  MuestraContenido();
+                           //System.out.println(" Fichas totales: "+sumaFichas());
+                           // MuestraContenido();
                         }
 
                     } else {
                         Ganador();
                         //System.out.println("Contenido jugadores despues dedecidir Ganador");
-                        //System.out.println(" Fichas totales: "+sumaFichas());
+                       // System.out.println(" Fichas totales: "+sumaFichas());
                        // MuestraContenido();
                     }
                 } else {
@@ -186,7 +191,7 @@ public class Mesa {
                 Ganador();
                 ActualizarManosJugadas();
                 //System.out.println("Contenido jugadores despues dedecidir Ganador");
-               // System.out.println(" Fichas totales: "+sumaFichas());
+                //System.out.println(" Fichas totales: "+sumaFichas());
                 //MuestraContenido();
             }
 
@@ -201,9 +206,9 @@ public class Mesa {
             }
 
             ActualizarMesa();
-           // System.out.println(" Fichas totales: "+sumaFichas());
+            //System.out.println(" Fichas totales: "+sumaFichas());
             //System.out.println("MESA DESPUES DE EMIMINAR JUGADORES");
-           // MuestraContenido();
+            //MuestraContenido();
             ActualizaridCiega();
 
             bote=0;
@@ -476,20 +481,21 @@ public class Mesa {
         }
     }
 
-    public void ActualizarFitness(){
+ /**   public void ActualizarFitness(){
         for (int i=0; i<jugadoresMesa.size();i++){
             jugadoresMesa.get(i).calcularFitness();
 
 
         }
-    }
+    }*/
 
     public void ActualizarIdentificacion(){
         int []identificacion= new int[3];
-        //identificacion[0]=idGenracion;
+
         identificacion[1]=idMesa;
         for (int i=0; i<jugadoresMesa.size();i++){
             identificacion[2]=i;
+            identificacion[0]=jugadoresMesa.get(i).getIdentificacion()[0];
             jugadoresMesa.get(i).setIdentificacion(identificacion);
         }
 
