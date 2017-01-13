@@ -221,6 +221,9 @@ public class Jugador {
         this.fichas = 1000;
         this.fichasGanadas = 0;
         this.fichasApostadas = 0;
+        this.totalFichasApostadas=0;
+        this.manosGanadas = 0;
+        this.manosJugadas = 0;
         this.cartasEnMano = new Carta[2];
         this.cartasComunes.clear();
     }
