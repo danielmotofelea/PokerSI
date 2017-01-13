@@ -1,4 +1,6 @@
 package pokerSI;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -249,6 +251,10 @@ public class Main {
         double [] genDefault = new double[12];
         Torneo torneo;
         Jugador jDefault;
+        
+        FileWriter salida = null;
+        PrintWriter salida2=null;
+        double linea=0;
 
         /** Se crean los 8 jugadores predeterminados y se añaden a generacion **/
         /*
@@ -286,7 +292,7 @@ public class Main {
             }
             jDefault = new Jugador();
             jDefault.setGen(genDefault);
-            generacion.add(jDefault);
+           // generacion.add(jDefault);
         }
 
         /*
@@ -297,7 +303,7 @@ public class Main {
 
         /** Se crean, de forma aleatoria e individual, los 56 jugadores restantes de la primera generacion y se añaden a generacion **/
 
-        for (int i = 8; i < 64; i++) {
+        for (int i = 0; i < 64; i++) {
             generacion.add(generarJugador());
         }
 
@@ -318,14 +324,50 @@ public class Main {
             generacion.clear(); //Los finalistas se han guardado, el resto desaparecen
 
             //Calculamos fitness, exportamos datos, metemos los finalistas en la nueva generación y los reiniciamos.
-            for (int i = 0; i < 8; i++) {
-                finalistas.get(i).calcularFitness();
-                /**
-                 * Tras calcularlo, se pasan los datos a fichero cuando corresponda.
-                 * Si es necesario, se puede separar este bucle en dos partes para facilitar la implementación.
-                 */
-                generacion.add(finalistas.get(i));
-                generacion.get(i).resetAtributosJugador();
+             try {
+                salida = new FileWriter("Fitness.txt", true);
+                salida2 = new PrintWriter(salida);
+                salida2.println("FITNESS DE LA GENERACION "+numGeneracion);
+                double fitnessTotal=0;
+                double varianza =0;
+                double fitnessMedia=0;
+                for (int i = 0; i < 8; i++) {
+                    finalistas.get(i).calcularFitnessMesaFinal();
+                    System.out.println("MESA AL CALCULAR EL FITNESS");
+                    System.out.println(finalistas.get(i).toString());
+                    /**
+                     * Tras calcularlo, se pasan los datos a fichero cuando corresponda.
+                     * Si es necesario, se puede separar este bucle en dos partes para facilitar la implementación.
+                     */
+                    linea = finalistas.get(i).getFitness();
+                    fitnessTotal=fitnessTotal+linea;
+                    salida2.println("JUGADOR "+i);
+                    salida2.println("Fitness en la mesa final "+finalistas.get(i).getFitnessMesaFinal());
+                    salida2.println("Fitness en la mesa clasificadora "+ finalistas.get(i).getFitnessMesaClasificatoria());
+                    salida2.println("Media fitness de las dos mesas "+ finalistas.get(i).getFitness());
+                    System.out.println(linea);
+
+
+                }
+                fitnessMedia=fitnessTotal/finalistas.size();
+
+                for(int j=0; j<finalistas.size(); j++){
+                    varianza=varianza+((finalistas.get(j).getFitness()-(fitnessMedia)) * (finalistas.get(j).getFitness()-(fitnessMedia)));
+                }
+                varianza=varianza/finalistas.size();
+                salida2.println("La media de los fitness de la generacion "+numGeneracion+" es "+fitnessMedia);
+                salida2.println("La varianza de los fitness de la generacion "+numGeneracion+" es "+varianza);
+                salida2.println();
+                salida2.println();
+                salida.close();
+                salida2.close();
+
+                for(int z=0; z<finalistas.size();z++){
+                    generacion.add(finalistas.get(z));
+                    generacion.get(z).resetAtributosJugador();
+                }
+            }catch (Exception e) {
+                System.out.println(e.getMessage());
             }
 
             numGeneracion++; /** declarado aquí por si hay que exportar numGeneracion a fichero en el bucle anterior*/
