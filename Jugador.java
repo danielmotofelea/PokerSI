@@ -28,7 +28,8 @@ public class Jugador {
     private boolean activo;
 
     private int valorMano;
-    private double fitness;
+    private double[] fitness;
+    private double[] soporteReglas;
     private int []identificacion;
     private Carta []cartasEnMano;
     private ArrayList<Carta> cartasComunes;
@@ -39,12 +40,13 @@ public class Jugador {
         this.fichasApostadas = 0;
         this.manosGanadas = 0;
         this.manosJugadas = 0;
-        this.fitness = 0;
         this.totalFichasApostadas = 0;
         this.activo = true;
         this.valorMano = 1;
-
-        this.gen = new double[11];                     /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
+            
+        this.fitness = new double[2]; 
+        this.gen = new double[11];
+        this.soporteReglas= new double[11];             /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
         this.cartasEnMano = new Carta[2] ;             /** Las dos cartas en mano las tomamos como enteros*/
         this.cartasComunes = new ArrayList<Carta>();   /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
@@ -122,13 +124,19 @@ public class Jugador {
     public void setIdentificacion(int[] identificacion) {
         System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length);
     }
+    
+    public double getFitnessMesaFinal(){
+        return fitness[1];
+    }
 
-    public void setFitness(double valor){
-        fitness = valor;
+    public double getFitnessMesaClasificatoria(){
+        return fitness[0];
     }
-    public double getFitness(){
-        return fitness;
+
+    public double getFitness() {
+        return (fitness[0]+fitness[1])/2 ;
     }
+  
 
     public double []getMejorMano() {
         return mejorMano;
@@ -190,7 +198,7 @@ public class Jugador {
                 ", mejorMano=" + Arrays.toString(mejorMano) +
                 ", activo=" + activo +
                 ", valorMano=" + valorMano +
-                ", fitness=" + fitness +
+                ", fitness=" + Arrays.toString(fitness) +
                 ", identificacion=" + Arrays.toString(identificacion) +
                 ", cartasEnMano=" + Arrays.toString(cartasEnMano) +
                 ", cartasComunes=" + cartasComunes +
@@ -203,7 +211,7 @@ public class Jugador {
         this.fichasApostadas = 0;   // guardamos el fitness de los jugadores de una generacion a otra
         this.manosGanadas = 0;
         this.manosJugadas = 0;
-        this.fitness = 0;
+        this.fitness = new double[2];
         this.cartasEnMano = new Carta[2];
         this.cartasComunes.clear();
     }
@@ -220,15 +228,27 @@ public class Jugador {
      *  por lo tanto se calculara unicamente 2 veces por partida en el caso de los jugadores de la mesa final
      *  y con el valor fitness ver la evolucion de la grafica de aprendizaje que elabora la clase MAIN */
 
-    public double calcularFitness(){
+    public double calcularFitnessMesa(){
 
-        if((manosJugadas != 0) && (totalFichasApostadas != 0))
-            fitness=(((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/((double)totalFichasApostadas)))*100;
-            //fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)fichasApostadas)) / 100.0 ;
+        if((manosJugadas !=0) && (totalFichasApostadas !=0))
+            fitness[0]=(((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/((double)totalFichasApostadas)))*100;
+            // fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)totalFichasApostadas)) / 100.0 ;
             //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
         else
-            fitness = 0;
-        return fitness;
+            fitness[0] = 0;
+        return fitness[0];
+    }
+
+    public double calcularFitnessMesaFinal(){
+
+        if((manosJugadas !=0) && (totalFichasApostadas !=0))
+            fitness[1]=(((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/((double)totalFichasApostadas)))*100;
+            // fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)totalFichasApostadas)) / 100.0 ;
+            //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
+        else
+            fitness[1] = 0;
+        return fitness[1];
+
     }
 
     /** Devuelve dos valores:
@@ -1259,6 +1279,18 @@ public class Jugador {
         fis.getVariable("mano").setValue(this.mejorMano[1]); //Introducimos el valor de la ponderacion de la mano
 
         fis.evaluate();
+            
+        soporteReglas[0]=rule1.getDegreeOfSupport();
+        soporteReglas[1]=rule2.getDegreeOfSupport();
+        soporteReglas[2]=rule3.getDegreeOfSupport();
+        soporteReglas[3]=rule4.getDegreeOfSupport();
+        soporteReglas[4]=rule5.getDegreeOfSupport();
+        soporteReglas[5]=rule6.getDegreeOfSupport();
+        soporteReglas[6]=rule7.getDegreeOfSupport();
+        soporteReglas[7]=rule8.getDegreeOfSupport();
+        soporteReglas[8]=rule9.getDegreeOfSupport();
+        soporteReglas[9]=rule10.getDegreeOfSupport();
+        soporteReglas[10]=rule11.getDegreeOfSupport();
 
         /**
          * Comprobamos la decisión que se va a tomar.
@@ -1315,6 +1347,27 @@ public class Jugador {
         JDialogFis jdf = new JDialogFis(fis, 800, 600);
         jdf.repaint();
 
+    }
+    
+   public void gradoDeSoporte(int i,int g){
+        FileWriter salida = null;
+        PrintWriter salida2=null;
+
+        try {
+            salida = new FileWriter("GradosDeSoporte.txt", true);
+            salida2 = new PrintWriter(salida);
+            salida2.println("JUGADOR " +i+ " de la generacion "+g);
+
+            for(int j=0;j<11;j++){
+                salida2.println("Grado de soporte de la regla "+(j+1)+" "+soporteReglas[j]);
+            }
+
+            salida.close();
+            salida2.close();
+        }catch (Exception e) {
+            System.out.println(e.getMessage());
+
+        }
     }
 
 
