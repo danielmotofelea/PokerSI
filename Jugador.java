@@ -1,19 +1,20 @@
 
 package pokerSI;
 
-        import net.sourceforge.jFuzzyLogic.FIS;
-        import net.sourceforge.jFuzzyLogic.FunctionBlock;
-        import net.sourceforge.jFuzzyLogic.defuzzifier.DefuzzifierCenterOfGravity;
-        import net.sourceforge.jFuzzyLogic.membership.*;
-        import net.sourceforge.jFuzzyLogic.plot.JDialogFis;
-        import net.sourceforge.jFuzzyLogic.rule.*;
-        import net.sourceforge.jFuzzyLogic.ruleAccumulationMethod.RuleAccumulationMethodMax;
-        import net.sourceforge.jFuzzyLogic.ruleActivationMethod.RuleActivationMethodMin;
-        import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodAndMin;
-        import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodOrMax;
-        import java.io.FileWriter;
-        import java.io.PrintWriter;
-        import java.util.* ;
+import net.sourceforge.jFuzzyLogic.FIS;
+import net.sourceforge.jFuzzyLogic.FunctionBlock;
+import net.sourceforge.jFuzzyLogic.defuzzifier.DefuzzifierCenterOfGravity;
+import net.sourceforge.jFuzzyLogic.membership.*;
+import net.sourceforge.jFuzzyLogic.plot.JDialogFis;
+import net.sourceforge.jFuzzyLogic.rule.*;
+import net.sourceforge.jFuzzyLogic.ruleAccumulationMethod.RuleAccumulationMethodMax;
+import net.sourceforge.jFuzzyLogic.ruleActivationMethod.RuleActivationMethodMin;
+import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodAndMin;
+import net.sourceforge.jFuzzyLogic.ruleConnectionMethod.RuleConnectionMethodOrMax;
+
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.* ;
 public class Jugador {
 
     /** Habría que añadir un atributo que indique que tipo de mano tiene el jugador y pasarsela a la mesa*/
@@ -35,6 +36,7 @@ public class Jugador {
     private Carta []cartasEnMano;
     private ArrayList<Carta> cartasComunes;
 
+
     public Jugador(){       /** Constructor del pokerSI.Jugador sin parametros */
         this.fichas = 1000;
         this.fichasGanadas = 0;
@@ -44,8 +46,8 @@ public class Jugador {
         this.totalFichasApostadas = 0;
         this.activo = true;
         this.valorMano = 1;
-            
-        this.fitness = new double[2]; 
+
+        this.fitness = new double[2];
         this.gen = new double[11];
         this.soporteReglas= new double[11];             /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
@@ -125,7 +127,7 @@ public class Jugador {
     public void setIdentificacion(int[] identificacion) {
         System.arraycopy(identificacion, 0, this.identificacion, 0, identificacion.length);
     }
-    
+
     public double getFitnessMesaFinal(){
         return fitness[1];
     }
@@ -137,7 +139,7 @@ public class Jugador {
     public double getFitness() {
         return (fitness[0]+fitness[1])/2 ;
     }
-  
+
 
     public double []getMejorMano() {
         return mejorMano;
@@ -209,7 +211,8 @@ public class Jugador {
     public void resetAtributosJugador(){
         this.fichas = 1000;
         this.fichasGanadas = 0;
-        this.fichasApostadas = 0;   // guardamos el fitness de los jugadores de una generacion a otra
+        this.fichasApostadas = 0;       // guardamos el fitness de los jugadores de una generacion a otra
+        this.totalFichasApostadas=0;
         this.manosGanadas = 0;
         this.manosJugadas = 0;
         this.fitness = new double[2];
@@ -954,7 +957,7 @@ public class Jugador {
          */
         //MembershipFunction mPocas = new MembershipFunctionGaussian(new Value(mediaPocas), new Value(desvPocas));
         //MembershipFunction mMedias = new MembershipFunctionGaussian(new Value(mediaMedias), new Value(desvMedias));
-       // MembershipFunction mMuchas = new MembershipFunctionGaussian(new Value(mediaMuchas), new Value(desvMuchas));
+        //MembershipFunction mMuchas = new MembershipFunctionGaussian(new Value(mediaMuchas), new Value(desvMuchas));
         MembershipFunction mPocas = new MembershipFunctionTrapetzoidal( new Value(mediaPocas-desvPocas),new Value(mediaPocas*0.8),new Value(mediaPocas*1.2),new Value(mediaPocas+desvPocas));
         MembershipFunction mMedias = new MembershipFunctionTrapetzoidal(new Value(mediaMedias-desvMedias),new Value(mediaMedias*0.8),new Value(mediaMedias*1.2),new Value(mediaMedias+desvMedias));
         MembershipFunction mMuchas = new MembershipFunctionTrapetzoidal(new Value(mediaMuchas-desvMuchas),new Value(mediaMuchas-desvMuchas*0.5),new Value(mediaMuchas+desvMuchas),new Value(mediaMuchas+desvMuchas+1));
@@ -1006,14 +1009,14 @@ public class Jugador {
         Value buenaX[] = { new Value(205), new Value(303), new Value(406) }; //Doble pareja (2 y 3, 205) a escalera (a 6, 406)
         Value buenaY[] = { new Value(0), new Value(1), new Value(0) };  //Maximo en Trio de 3 (303)
         */
-        Value mBuenaX[] = { new Value(311), new Value(918) }; //Trio (J) a escalera de color (max)
+        Value mBuenaX[] = { new Value(224), new Value(918) }; //Trio (J) a escalera de color (max)
         Value mBuenaY[] = { new Value(0), new Value(1) };
 
         MembershipFunction mMuyMala = new MembershipFunctionPieceWiseLinear(mMalaX, mMalaY);
         //MembershipFunction mMala = new MembershipFunctionPieceWiseLinear(malaX, malaY);    TODO borrar si funciona la grafica
         //MembershipFunction mBuena = new MembershipFunctionPieceWiseLinear(buenaX, buenaY); TODO borrar si funciona la grafica
-        MembershipFunction mMala = new MembershipFunctionTriangular(new Value(9), new Value(108), new Value(208));
-        MembershipFunction mBuena = new MembershipFunctionTriangular(new Value(114), new Value(303), new Value(406));
+        MembershipFunction mMala = new MembershipFunctionTriangular(new Value(11), new Value(105), new Value(208));
+        MembershipFunction mBuena = new MembershipFunctionTriangular(new Value(105), new Value(208), new Value(406));
         MembershipFunction mMuyBuena = new MembershipFunctionPieceWiseLinear(mBuenaX, mBuenaY);
 
         LinguisticTerm ltMuyMala = new LinguisticTerm("muyMala", mMuyMala);
@@ -1267,6 +1270,18 @@ public class Jugador {
         /**
          * Valores de entrada
          */
+        rule1.setDegreeOfSupport(soporteReglas[0]);
+        rule2.setDegreeOfSupport(soporteReglas[1]);
+        rule3.setDegreeOfSupport(soporteReglas[2]);
+        rule4.setDegreeOfSupport(soporteReglas[3]);
+        rule5.setDegreeOfSupport(soporteReglas[4]);
+        rule6.setDegreeOfSupport(soporteReglas[5]);
+        rule7.setDegreeOfSupport(soporteReglas[6]);
+        rule8.setDegreeOfSupport(soporteReglas[7]);
+        rule9.setDegreeOfSupport(soporteReglas[8]);
+        rule10.setDegreeOfSupport(soporteReglas[9]);
+        rule11.setDegreeOfSupport(soporteReglas[10]);
+
 
         fis.getVariable("fichas").setValue((double) this.fichas);
 
@@ -1283,17 +1298,29 @@ public class Jugador {
         fis.getVariable("mano").setValue(this.mejorMano[1]); //Introducimos el valor de la ponderacion de la mano
 
         fis.evaluate();
-            
+
+
+        if(rule1.getDegreeOfSupport()!=0)
         soporteReglas[0]=rule1.getDegreeOfSupport();
+        if(rule2.getDegreeOfSupport()!=0)
         soporteReglas[1]=rule2.getDegreeOfSupport();
+        if(rule3.getDegreeOfSupport()!=0)
         soporteReglas[2]=rule3.getDegreeOfSupport();
+        if(rule4.getDegreeOfSupport()!=0)
         soporteReglas[3]=rule4.getDegreeOfSupport();
+        if(rule5.getDegreeOfSupport()!=0)
         soporteReglas[4]=rule5.getDegreeOfSupport();
+        if(rule6.getDegreeOfSupport()!=0)
         soporteReglas[5]=rule6.getDegreeOfSupport();
+        if(rule7.getDegreeOfSupport()!=0)
         soporteReglas[6]=rule7.getDegreeOfSupport();
+        if(rule8.getDegreeOfSupport()!=0)
         soporteReglas[7]=rule8.getDegreeOfSupport();
+        if(rule9.getDegreeOfSupport()!=0)
         soporteReglas[8]=rule9.getDegreeOfSupport();
+        if(rule10.getDegreeOfSupport()!=0)
         soporteReglas[9]=rule10.getDegreeOfSupport();
+        if(rule11.getDegreeOfSupport()!=0)
         soporteReglas[10]=rule11.getDegreeOfSupport();
 
         /**
@@ -1352,8 +1379,8 @@ public class Jugador {
         jdf.repaint();
 
     }
-    
-   public void gradoDeSoporte(int i,int g){
+
+    public void gradoDeSoporte(int i,int g){
         FileWriter salida = null;
         PrintWriter salida2=null;
 
@@ -1376,7 +1403,7 @@ public class Jugador {
 
 
 
-   public int tomarDecision(){
+    public int tomarDecision(){
         return 0;
-   }
+    }
 }
