@@ -1,10 +1,12 @@
-package pokerSI;
+package Version1;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Random;
+
+import static java.lang.Math.sqrt;
 
 
 public class Main {
@@ -243,7 +245,12 @@ public class Main {
 
         FileWriter salida = null;
         PrintWriter salida2=null;
+
+        FileWriter fic = null;
+        PrintWriter fic2=null;
         double linea=0.0;
+        int aux2=0;
+        double fitnessGrafica=0;
 
 
 
@@ -272,10 +279,15 @@ public class Main {
             try {
                 salida = new FileWriter("Fitness.txt", true);
                 salida2 = new PrintWriter(salida);
+                fic = new FileWriter("ValoresGrafica.txt", true);
+                fic2 = new PrintWriter(fic);
                 salida2.println("FITNESS DE LA GENERACION "+numGeneracion);
                 double fitnessTotal=0.0;
                 double varianza = 0.0;
                 double fitnessMedia= 0.0;
+                double mejorFitness1=0.0;
+                double mejorFitness2=0.0;
+                int aux=0;
                 for (int i = 0; i < 8; i++) {
                     finalistas.get(i).calcularFitnessMesaFinal();
                     System.out.println("MESA AL CALCULAR EL FITNESS");
@@ -299,14 +311,40 @@ public class Main {
                 for(int j=0; j<finalistas.size(); j++){
                     varianza=varianza+((finalistas.get(j).getFitness()-(fitnessMedia)) * (finalistas.get(j).getFitness()-(fitnessMedia)));
                 }
+
+                for(int i=0;i<finalistas.size();i++){
+                    if(finalistas.get(i).getFitness()>mejorFitness1){
+                        mejorFitness1=finalistas.get(i).getFitness();
+                        aux=i;
+                    }
+                }
+
+                for(int i=0;i<finalistas.size();i++){
+                    if(finalistas.get(i).getFitness()>mejorFitness2&&i!=aux){
+                        mejorFitness2=finalistas.get(i).getFitness();
+                    }
+                }
+
+                if(numGeneracion%10!=0){
+                    fitnessGrafica+=(mejorFitness1+mejorFitness2)/2;
+                    //aux2++;
+                }else{
+                    fic2.println("Generaciones"+(numGeneracion-10)+" a "+numGeneracion);
+                    fic2.println(fitnessGrafica/10);
+                    fic2.println("////////HOLA/////////");
+                    fitnessGrafica=0;
+                    aux2=0;
+                }
+
                 varianza=varianza/finalistas.size();
-                salida2.println("La media de los fitness de la generacion "+numGeneracion+" es "+fitnessMedia);
-                salida2.println("La varianza de los fitness de la generacion "+numGeneracion+" es "+varianza);
+                salida2.println("La media de los dos mejores fitness de la generacion "+numGeneracion+" es "+(mejorFitness1+mejorFitness2)/2);
+                salida2.println("La desviacion de los fitness de la generacion "+numGeneracion+" es "+ sqrt(varianza));
                 salida2.println();
                 salida2.println();
                 salida.close();
                 salida2.close();
-
+                fic.close();
+                fic2.close();
             }catch (Exception e) {
                 System.out.println(e.getMessage());
             }
