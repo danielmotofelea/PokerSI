@@ -16,7 +16,7 @@ public class Main {
     private static Jugador generarJugador()
     {
         Jugador j = new Jugador();
-        Random rand = new Random(); //rand.nextDouble() devuelve numero entre 0 y 1, para gen.
+        Random rand = new Random();
         double [] gen = new double[j.getGen().length];
         j.setIdentificacion(new int[]{1, 0, 0}); //Las posiciones 1 y 2 se inicializan en Torneo
         System.arraycopy(j.getGen(), 0, gen, 0, j.getGen().length);
@@ -35,9 +35,9 @@ public class Main {
      * mutando y emparejando los valores del gen cuando proceda
      * @param numGeneracion
      * @param generacion
-     * @param finalistas
+     * @param nuevaGeneracion
      */
-    private static void generarJugadores(int numGeneracion, ArrayList<Jugador> generacion, ArrayList<Jugador> finalistas)
+    private static void generarJugadores(int numGeneracion, ArrayList<Jugador> generacion, ArrayList<Jugador> nuevaGeneracion)
     {
         Jugador nuevoJugador1 = new Jugador();
         Jugador nuevoJugador2 = new Jugador();
@@ -55,27 +55,27 @@ public class Main {
          *
          * Esta alta probabilidad de emparejamiento garantizará que no hay muchos individuos con el mismo comportamiento.
          *
-         * Si no toca emparejar, se copiaran dos finalistas integramente y despues se valorara la mutacion
+         * Si no toca emparejar, se copiaran dos jugadores integramente y despues se valorara la mutacion
          */
 
 
         if(rand.nextDouble() < 0.6){ //Recombinamos
 
             /*
-                En primer lugar, elegimos dos de los finalistas, teniendo más probabilidad cuanto mayor sea su fitness->
-                -> [4,5%, 5,5%, 6,5%, 8,5%, 10%, 15%, 20%, 30%]
+                En primer lugar, elegimos dos de los jugadores
              */
 
-            double prob;
-            int i1 = 8; //Le damos un valor imposible para evitar warning, en la primera iteracion se le dara un valor correcto
+            //double prob;
+            int i1 = 8;
             int i2; //i1 e i2 serviran para controlar que no sacamos dos veces el mismo jugador
             Jugador f1 = new Jugador();
             Jugador f2 = new Jugador();
 
             for (int i = 0; i < 2; i++) { //se hace lo mismo para los dos jugadores
 
-                prob = rand.nextDouble();
+                i2 = rand.nextInt(generacion.size());
 
+                /* Seleccion de finalistas con probabilidad en funcion del fitness, descartada en la version final
                 if(prob < 0.045){ //4.5%
                     i2 = 0;
                 }
@@ -99,22 +99,22 @@ public class Main {
                 }
                 else{ //30%
                     i2 = 7;
-                }
+                }*/
 
                 if(i < 1) {//primera iteracion
                     i1 = i2;
-                    f1 = finalistas.get(i1);
+                    f1 = generacion.get(i1);
                 }
                 else if(i1 == i2){
                     i--; //sera necesario volver a iterar, pues ha salido dos veces el mismo jugador
                 }
                 else{ //Segunda iteracion y hemos obtenido dos indices distintos
-                    f2 = finalistas.get(i2);
+                    f2 = generacion.get(i2);
                 }
             }
 
             /*
-                Una vez elegidos los finalistas, elegimos a partir de que índice del gen vamos a recombinar.
+                Una vez elegidos los jugadores, elegimos a partir de que índice del gen vamos a recombinar.
                 Hay que recordar que el proceso de recombinación genera 2 individuos.
 
                 En nuevoJugador1, de 0 a i2 se copia de f1, de i2+1 hasta el final se copia de f2.
@@ -136,8 +136,8 @@ public class Main {
             }
             else{
                 //Para nuevoJugador1
-                System.arraycopy(f1.getGen(), 0, nuevoGen1, 0, i2); //i2 expresa longitud, no posición
-                System.arraycopy(f2.getGen(), i2, nuevoGen1, i2, nuevoGen1.length-i2); //Aquí i2 si representa una posición
+                System.arraycopy(f1.getGen(), 0, nuevoGen1, 0, i2);
+                System.arraycopy(f2.getGen(), i2, nuevoGen1, i2, nuevoGen1.length-i2);
 
                 //Para nuevoJugador2
                 System.arraycopy(f2.getGen(), 0, nuevoGen2, 0, i2);
@@ -145,16 +145,18 @@ public class Main {
 
             }
         }
-        else{ //No toca recombinar, se copia directamente el gen de un finalista aleatorio (mas probabilidad cuanto mas fitness)
+        else{ //No toca recombinar, se copia directamente el gen de un jugador aleatorio
 
             /*
                 Como no vamos a recombinar, puede salir dos veces el mismo jugador
              */
-            double prob;
+            //double prob;
             int i1;
 
             for (int i = 0; i < 2; i++) { //se hace lo mismo para los dos jugadores
 
+                i1 = rand.nextInt(generacion.size()); //
+                /*
                 prob = rand.nextDouble();
 
                 if(prob < 0.045){ //4.5%
@@ -180,12 +182,12 @@ public class Main {
                 }
                 else{ //30%
                     i1 = 7;
-                }
+                }*/
 
                 if(i < 1){//primera iteracion
-                    nuevoGen1 = finalistas.get(i1).getGen();
+                    nuevoGen1 = generacion.get(i1).getGen();
                 }
-                else nuevoGen2 = finalistas.get(i1).getGen();
+                else nuevoGen2 = generacion.get(i1).getGen();
             }
         }
 
@@ -222,8 +224,8 @@ public class Main {
         nuevoJugador1.setGen(nuevoGen1);
         nuevoJugador2.setGen(nuevoGen2);
 
-        generacion.add(nuevoJugador1);
-        generacion.add(nuevoJugador2);
+        nuevaGeneracion.add(nuevoJugador1);
+        nuevaGeneracion.add(nuevoJugador2);
 
     }
 
@@ -234,15 +236,14 @@ public class Main {
     public static void main(String [] args)
     {
         ArrayList<Jugador> generacion = new ArrayList<>(64);         //ArrayList de jugadores, se pasa a clase Torneo
-        ArrayList<Jugador> finalistas = new ArrayList<>(8);          //ArrayList con los finalistas del anterior torneo
+        ArrayList<Jugador> finalistas = new ArrayList<>();          //ArrayList con los finalistas del anterior torneo
         int numGeneracion = 1;                                              //Numero de la generación en la que nos encontramos
-        double [] genDefault = new double[12];
         Torneo torneo;
-        Jugador jDefault;
+
 
         FileWriter salida = null;
         PrintWriter salida2=null;
-        double linea=0;
+        double linea=0.0;
 
 
 
@@ -258,7 +259,7 @@ public class Main {
             torneo = new Torneo(generacion, numGeneracion);
             finalistas.addAll(torneo.realizarTorneo());
 
-            /** Una vez finaliza el torneo, deben devolverse los 8 finalistas para añadirlos a @finalistas
+            /** Una vez finaliza el torneo, deben devolverse los 8 finalistas
              *
              * A continuación, se calcula el fitness de cada uno de los finalistas (jugador.calcularFitness()) y se guardan las estadísticas como corresponda.
              *
@@ -266,16 +267,15 @@ public class Main {
              * la generacion de los jugadores restantes mediante mutación y recombinación;
              * **/
 
-            generacion.clear(); //Los finalistas se han guardado, el resto desaparecen
 
             //Calculamos fitness, exportamos datos, metemos los finalistas en la nueva generación y los reiniciamos.
             try {
                 salida = new FileWriter("Fitness.txt", true);
                 salida2 = new PrintWriter(salida);
                 salida2.println("FITNESS DE LA GENERACION "+numGeneracion);
-                double fitnessTotal=0;
-                double varianza =0;
-                double fitnessMedia=0;
+                double fitnessTotal=0.0;
+                double varianza = 0.0;
+                double fitnessMedia= 0.0;
                 for (int i = 0; i < 8; i++) {
                     finalistas.get(i).calcularFitnessMesaFinal();
                     System.out.println("MESA AL CALCULAR EL FITNESS");
@@ -321,13 +321,26 @@ public class Main {
                     return new Double(j1.getFitness()).compareTo(new Double(j2.getFitness()));
                 }
             });
+            for (Jugador j: finalistas) {
+                j.gradoDeSoporte(j.getIdentificacion()[2], j.getIdentificacion()[0]);
+            }
+           /*
+                Como solo consevaremos los dos finalistas de mayor fitness, eliminamos al resto
+                 y utilizamos el arraylist para guardar la nueva generacion
+            */
 
+            for (int i = 0; i < 6; i++) {
+                finalistas.remove(0); //Borramos todos menos los dos mejores, que se conservarán para la siguiente generacion
+            }
+            //finalistas.clear();
 
-            for (int i = 0; i < 64; i+=2) {
+            for (int i = 2; i < 64; i+=2) {
                 generarJugadores(numGeneracion, generacion, finalistas);//Generamos 2 jugadores cada vez, y los añadimos a generacion
             }
 
-            //Ya se han generado todos los jugadores, luego se puede limpiar finalistas
+            //Ya se han generado todos los jugadores, luego se puede pasar los jugadores que hay en finalistas a generacion y volver a limpiar
+            generacion.clear();
+            generacion.addAll(finalistas);
             finalistas.clear();
 
             /*
@@ -336,6 +349,6 @@ public class Main {
             Runtime garbage = Runtime.getRuntime();
             garbage.gc();
 
-        }while(numGeneracion < 100); /** Se debe decidir esta condicion de terminacion, si se hace por tecla o por numGeneraciones*/
+        }while(numGeneracion < 100);
     }
 }
