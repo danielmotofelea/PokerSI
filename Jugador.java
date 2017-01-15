@@ -117,7 +117,7 @@ public class Jugador {
     }
 
     public void setGen(double[] gen) {
-        System.arraycopy(gen, 0, this.gen, 0, gen.length-1);
+        System.arraycopy(gen, 0, this.gen, 0, gen.length);
     }
 
     public int[] getIdentificacion() {
