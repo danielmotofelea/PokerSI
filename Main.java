@@ -281,6 +281,7 @@ public class Main {
                 double fitnessMedia= 0.0;
                 double mejorFitness1=0.0;
                 double mejorFitness2=0.0;
+                double desviacionGrafica=0.0;
                 int aux=0;
                 for (int i = 0; i < 8; i++) {
                     finalistas.get(i).calcularFitnessMesaFinal();
