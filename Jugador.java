@@ -17,7 +17,6 @@ import java.io.PrintWriter;
 import java.util.* ;
 public class Jugador {
 
-    /** Habría que añadir un atributo que indique que tipo de mano tiene el jugador y pasarsela a la mesa*/
 
     private int fichas;
     private int fichasGanadas;
@@ -25,7 +24,7 @@ public class Jugador {
     private int totalFichasApostadas;
     private int manosGanadas;
     private int manosJugadas;
-    private double []gen; /** Posiciones 0 a 10: pesos de reglas, posicion 11: agresividad */
+    private double []gen; /** Contiene pesos de reglas */
     private double [] mejorMano; /** Se usará como retorno de la función*/
     private boolean activo;
 
@@ -49,7 +48,7 @@ public class Jugador {
 
         this.fitness = new double[2];
         this.gen = new double[11];
-        this.soporteReglas= new double[11];             /** Tamaño 12 por ser 11 pesos de reglas + valor de agresividad*/
+        this.soporteReglas= new double[11];
         this.identificacion = new int[3];              /** Posicion 0: nºgeneracion // Posicion 1: nº mesa // Posicion 3: nº jugador*/
         this.cartasEnMano = new Carta[2] ;             /** Las dos cartas en mano las tomamos como enteros*/
         this.cartasComunes = new ArrayList<Carta>();   /** Las 5 cartas comunes de la mesa para ver nuestra mejor mano*/
@@ -211,7 +210,7 @@ public class Jugador {
     public void resetAtributosJugador(){
         this.fichas = 1000;
         this.fichasGanadas = 0;
-        this.fichasApostadas = 0;       // guardamos el fitness de los jugadores de una generacion a otra
+        this.fichasApostadas = 0;
         this.totalFichasApostadas=0;
         this.manosGanadas = 0;
         this.manosJugadas = 0;
@@ -902,10 +901,10 @@ public class Jugador {
      * @param apuestaMinima : valor de la apuesta mínima. No siempre será igual a la ciega grande.
      * @param apuestaMaxima : Valor del bote, para controlar que el valor devuelto no la supera
      * @param ciegaGrande : valor de la ciega grande, se utilizará cuando se decida subir la apuesta
-     * @param mediaPocas : media muestral para definición de variable gaussiana
-     * @param mediaMedias : "
-     * @param mediaMuchas : "
-     * @param desvPocas : desviación típica para definición de variable gaussiana
+     * @param mediaPocas : Este y los siguientes parametros establecen la grafica de fichas en funcion de los jugadores que quedan en la mesa
+     * @param mediaMedias
+     * @param mediaMuchas
+     * @param desvPocas
      * @param desvMedias
      * @param desvMuchas
      * @return (número entero): 0 pasar/noIr; 1 igualar; (cantidad a apostar) subir
@@ -953,11 +952,9 @@ public class Jugador {
          END_FUZZIFY */
 
         /*
-            Valores de medias y desviaciones tipicas se calculan en mesa cada vez que se elimina un jugador.
+            Valores de medias y desviaciones tipicas se obtienen en mesa.
          */
-        //MembershipFunction mPocas = new MembershipFunctionGaussian(new Value(mediaPocas), new Value(desvPocas));
-        //MembershipFunction mMedias = new MembershipFunctionGaussian(new Value(mediaMedias), new Value(desvMedias));
-        //MembershipFunction mMuchas = new MembershipFunctionGaussian(new Value(mediaMuchas), new Value(desvMuchas));
+
         MembershipFunction mPocas = new MembershipFunctionTrapetzoidal( new Value(mediaPocas-desvPocas),new Value(mediaPocas*0.8),new Value(mediaPocas*1.2),new Value(mediaPocas+desvPocas));
         MembershipFunction mMedias = new MembershipFunctionTrapetzoidal(new Value(mediaMedias-desvMedias),new Value(mediaMedias*0.8),new Value(mediaMedias*1.2),new Value(mediaMedias+desvMedias));
         MembershipFunction mMuchas = new MembershipFunctionTrapetzoidal(new Value(mediaMuchas-desvMuchas),new Value(mediaMuchas-desvMuchas*0.5),new Value(mediaMuchas+desvMuchas),new Value(mediaMuchas+desvMuchas+1));
@@ -996,27 +993,15 @@ public class Jugador {
          TERM muyBuena := gauss
          END_FUZZIFY */
 
-        /*
-            TODO Probar graficas
-         */
-
         Value mMalaX[] = { new Value(2), new Value(106) }; //Carta alta (min) a pareja de 6
         Value mMalaY[] = { new Value(1), new Value(0) };
-       /*
-        TODO borrar este comentario en caso de que la grafica funcione bien
-        Value malaX[] = { new Value(9), new Value(108), new Value(208) }; //Carta alta (9) a doble pareja (2 y 6, 208)
-        Value malaY[] = { new Value(0), new Value(1), new Value(0) }; //Maximo en pareja de 8 (108)
-        Value buenaX[] = { new Value(205), new Value(303), new Value(406) }; //Doble pareja (2 y 3, 205) a escalera (a 6, 406)
-        Value buenaY[] = { new Value(0), new Value(1), new Value(0) };  //Maximo en Trio de 3 (303)
-        */
-        Value mBuenaX[] = { new Value(224), new Value(918) }; //Trio (J) a escalera de color (max)
+
+        Value mBuenaX[] = { new Value(224), new Value(918) }; //Doble pareja (Q) a escalera de color (max)
         Value mBuenaY[] = { new Value(0), new Value(1) };
 
         MembershipFunction mMuyMala = new MembershipFunctionPieceWiseLinear(mMalaX, mMalaY);
-        //MembershipFunction mMala = new MembershipFunctionPieceWiseLinear(malaX, malaY);    TODO borrar si funciona la grafica
-        //MembershipFunction mBuena = new MembershipFunctionPieceWiseLinear(buenaX, buenaY); TODO borrar si funciona la grafica
-        MembershipFunction mMala = new MembershipFunctionTriangular(new Value(11), new Value(105), new Value(208));
-        MembershipFunction mBuena = new MembershipFunctionTriangular(new Value(105), new Value(208), new Value(406));
+        MembershipFunction mMala = new MembershipFunctionTriangular(new Value(11), new Value(105), new Value(208));//Carta alta (J) a doble pareja (2 y 6, 208)
+        MembershipFunction mBuena = new MembershipFunctionTriangular(new Value(105), new Value(208), new Value(406)); //Pareja de 5 a escalera(a 6)
         MembershipFunction mMuyBuena = new MembershipFunctionPieceWiseLinear(mBuenaX, mBuenaY);
 
         LinguisticTerm ltMuyMala = new LinguisticTerm("muyMala", mMuyMala);
@@ -1042,7 +1027,7 @@ public class Jugador {
             la parte entera del valor que devuelva la defuzzyficacion:
             Pasar/NoIr: 0 a 1
             Igualar: 0.5 a 2 (iguala la apuesta mínima)
-            Apostar: 1 a ¿10?.
+            Subir: 1 a subidaMaxima.
             Ejemplos:
                         -si obtenemos un valor de 0'6, se considerará pasar/noIr o igualar en función de las reglas
                         -si obtenemos un valor de 1'9, se considerará Igualar o subir en función de las reglas
@@ -1087,16 +1072,6 @@ public class Jugador {
 
         /**
          * Bloque de reglas
-         *
-         * Se han omitido declaraciones repetidas de términos, a pesar de que en los ejemplos
-         * si se mantenían repetidas. Se han hecho pruebas y esta omisión funciona correctamente.
-         *
-         * Quizá se podría probar a omitir también algunas RuleExpression,
-         * que también se repiten aunque con menor frecuencia. Esto también podría dificultar la lectura del código
-         * por lo que queda descartado por el momento.
-         *
-         * También se podría probar a declarar cada tipo de decision como RuleTerm y no pasarlo "a pelo" cada vez que
-         * se hace un addConsequent, pero igualmente podría dificultar la lectura del código.
          */
 
         RuleBlock ruleBlock = new RuleBlock(fb);
@@ -1252,6 +1227,7 @@ public class Jugador {
         /*
             END_RULEBLOCK
          */
+
         /*
             END_FUNTIONBLOCK
          */
@@ -1263,12 +1239,12 @@ public class Jugador {
         ruleBlockHashMap.put(ruleBlock.getName(), ruleBlock);
         fb.setRuleBlocks(ruleBlockHashMap);
 
-
-        /**
-         * TODO especificar donde se van a guardar los valores de grado de soporte y peso de las reglas, etc
-         */
         /**
          * Valores de entrada
+         */
+
+        /*
+            Nos permitira recordar el uso de los grados de soporte en anteriores turnos del jugador
          */
         rule1.setDegreeOfSupport(soporteReglas[0]);
         rule2.setDegreeOfSupport(soporteReglas[1]);
@@ -1301,31 +1277,41 @@ public class Jugador {
 
 
         if(rule1.getDegreeOfSupport()!=0)
-        soporteReglas[0]=rule1.getDegreeOfSupport();
+            soporteReglas[0]=rule1.getDegreeOfSupport();
+
         if(rule2.getDegreeOfSupport()!=0)
-        soporteReglas[1]=rule2.getDegreeOfSupport();
+            soporteReglas[1]=rule2.getDegreeOfSupport();
+
         if(rule3.getDegreeOfSupport()!=0)
-        soporteReglas[2]=rule3.getDegreeOfSupport();
+            soporteReglas[2]=rule3.getDegreeOfSupport();
+
         if(rule4.getDegreeOfSupport()!=0)
-        soporteReglas[3]=rule4.getDegreeOfSupport();
+            soporteReglas[3]=rule4.getDegreeOfSupport();
+
         if(rule5.getDegreeOfSupport()!=0)
-        soporteReglas[4]=rule5.getDegreeOfSupport();
+            soporteReglas[4]=rule5.getDegreeOfSupport();
+
         if(rule6.getDegreeOfSupport()!=0)
-        soporteReglas[5]=rule6.getDegreeOfSupport();
+            soporteReglas[5]=rule6.getDegreeOfSupport();
+
         if(rule7.getDegreeOfSupport()!=0)
-        soporteReglas[6]=rule7.getDegreeOfSupport();
+            soporteReglas[6]=rule7.getDegreeOfSupport();
+
         if(rule8.getDegreeOfSupport()!=0)
-        soporteReglas[7]=rule8.getDegreeOfSupport();
+            soporteReglas[7]=rule8.getDegreeOfSupport();
+
         if(rule9.getDegreeOfSupport()!=0)
-        soporteReglas[8]=rule9.getDegreeOfSupport();
+            soporteReglas[8]=rule9.getDegreeOfSupport();
+
         if(rule10.getDegreeOfSupport()!=0)
-        soporteReglas[9]=rule10.getDegreeOfSupport();
+            soporteReglas[9]=rule10.getDegreeOfSupport();
+
         if(rule11.getDegreeOfSupport()!=0)
-        soporteReglas[10]=rule11.getDegreeOfSupport();
+            soporteReglas[10]=rule11.getDegreeOfSupport();
 
         /**
          * Comprobamos la decisión que se va a tomar.
-         * En principio, no se tendrá en cuenta el punto de corte entre pasar/noIr e igualar ya que, aunque no hay dos reglas
+         * No se tendrá en cuenta el punto de corte entre pasar/noIr e igualar ya que, aunque no hay dos reglas
          * que mediante sus pesos lo puedan limitar, es muy improbable que se de el caso del punto de corte, debido a que estamos
          * trabajando con bastante precision (double)
          */
@@ -1354,40 +1340,23 @@ public class Jugador {
             }
         }
 
-        //pruebaBorroso(ruleBlockHashMap, fis); //TODO eliminar esta declaración cuando hayan finalizado las pruebas del controlador
-
-
-        /**
-         * TODO especificar cada cuantas generaciones (this.identificacion[0]) hay que guardar en fichero el output del fis
-         */
-
         return apuesta;
 
     }
 
     /**
-     * La única finalidad de la función pruebaBorroso es comprobar que las reglas y las variables han quedado bien
-     * definidas.
-     * @param ruleBlockHashMap
-     * @param fis
+     * Escritura de grados de soporte en fichero para visualizar mejor los datos
+     * @param idJugador
+     * @param idGeneracion
      */
-    public void pruebaBorroso(HashMap<String, RuleBlock> ruleBlockHashMap, FIS fis)
-    {
-
-        System.out.println(" /************ PRUEBA CONTROLADOR BORROSO ***************/");
-        JDialogFis jdf = new JDialogFis(fis, 800, 600);
-        jdf.repaint();
-
-    }
-
-    public void gradoDeSoporte(int i,int g){
+    public void gradoDeSoporte(int idJugador,int idGeneracion){
         FileWriter salida = null;
         PrintWriter salida2=null;
 
         try {
             salida = new FileWriter("GradosDeSoporte.txt", true);
             salida2 = new PrintWriter(salida);
-            salida2.println("JUGADOR " +i+ " de la generacion "+g);
+            salida2.println("JUGADOR " +idJugador+ " de la generacion "+idGeneracion);
 
             for(int j=0;j<11;j++){
                 salida2.println("Grado de soporte de la regla "+(j+1)+" "+soporteReglas[j]);
@@ -1401,9 +1370,4 @@ public class Jugador {
         }
     }
 
-
-
-    public int tomarDecision(){
-        return 0;
-    }
 }
