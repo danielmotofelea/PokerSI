@@ -238,8 +238,7 @@ public class Jugador {
 
         if((manosJugadas !=0) && (totalFichasApostadas !=0))
             fitness[0]=(((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/((double)totalFichasApostadas)))*100;
-            // fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)totalFichasApostadas)) / 100.0 ;
-            //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
+
         else
             fitness[0] = 0;
         return fitness[0];
@@ -249,8 +248,7 @@ public class Jugador {
 
         if((manosJugadas !=0) && (totalFichasApostadas !=0))
             fitness[1]=(((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/((double)totalFichasApostadas)))*100;
-            // fitness =  ((double)manosGanadas/(double)manosJugadas)*((double)fichasGanadas/(7.0*(double)totalFichasApostadas)) / 100.0 ;
-            //fichasApostadas * 7 porque se considera que la máxima cantidad de fichas que puede ganar es 7000
+
         else
             fitness[1] = 0;
         return fitness[1];
@@ -267,7 +265,7 @@ public class Jugador {
         ArrayList<Carta> manoProvisional = new ArrayList<Carta>();    /** Array creado para añadir las 7 cartas al borroso y que devuelva la mejor mano*/
         for(int i=0; i<2; i++)
             manoProvisional.add(cartasEnMano[i]);        /** Se añaden las cartas que se tenga actualmente en un arraylist unificado*/
-        for(int j=0; j<cartasComunes.size(); j++)                           /** Para pasarselo a otro metodo y que evalue la mejor mano*/
+        for(int j=0; j<cartasComunes.size(); j++)
             manoProvisional.add(cartasComunes.get(j));
 
         int numCartas = manoProvisional.size();
@@ -314,9 +312,10 @@ public class Jugador {
         for(int j=0; j<2; j++)
             valorFull[j] = 0;
 
-        /** OBSERVACION: En el caso del jugador nos da igual cual sea el valor de las cartas, es decir, en esta implementacion
-         *               lo unico que nos interesa es que tipo de mano tenemos, trio, full, etc. Nos da igual el valor de dicha manos,
-         *               ya que, dicha valoracion la tiene que tener en cuenta la logica borrosa y el objeto MESA cuando tenga que decidir
+        /** OBSERVACION: El calculo en este método principalmente quiere ver que tipo de mano tiene el jugador (pareja, trio, poker, etc)
+         *               pero finalmente se hace una llamada al metodo ponderación para que si tenga en cuenta el tipo de mano y ademas
+         *               calcule el valor de la mano del jugador respecto a la mejor mano comun(en la mesa), dicha ponderacion,
+         *               la tiene que tener en cuenta la logica borrosa y el objeto MESA cuando tenga que decidir
          *               cual es la mesa ganadora. */
 
         /** Para facilitar el recorrido ordenamos el arrayList por el valor de la carta*/
@@ -327,11 +326,14 @@ public class Jugador {
             }
         });
 
-        /** Valoramos de qué palo es cada carta, y también si hay COLOR*/
+        /** Valoramos de qué palo es cada carta, y también si hay COLOR
+         *  Una vez ordenado, cogemos cada carta por separado y vemos de que palo es
+         *  Despues aumentamos el contador de dicho palo para llevar el recuento */
+
         for(int i=0; i < numCartas; i++){
 
-            if (manoProvisional.get(i).getPalo() == 1) {    /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
-                contCorazones++;                          /** Despues aumentamos el contador de dicho palo para llevar el recuento */
+            if (manoProvisional.get(i).getPalo() == 1) {
+                contCorazones++;
                 if(contCorazones > 4){
                     valorColor = manoProvisional.get(i).getValor();      /** Guarda el valor mas alto del color */
                     color = true;
@@ -363,12 +365,17 @@ public class Jugador {
                 }
             }
 
-            numeroDeLaCarta = manoProvisional.get(i).getValor();    /** Guardamos el valor de carta en la posicion valor - 2 (para ahorrar espacio) */
+            /** Guardamos el valor de carta en la posicion valor - 2 (para ahorrar espacio) */
+
+            numeroDeLaCarta = manoProvisional.get(i).getValor();
             numeroCarta[numeroDeLaCarta - 2] = numeroCarta[numeroDeLaCarta - 2] + 1;
 
-            if((i+1) < numCartas) {              /** Se comprueba si hay mas cartas en la mano, en cuyo caso se pasa a comprobar si hay escalera o no*/
+            /** Se comprueba si hay mas cartas en la mano, en cuyo caso se pasa a comprobar si hay escalera o no
+             *  Para ver si tenemos escalera lo unico que tenemos que ver es si tenemos 5 cartas seguidas. */
 
-                valorActual = manoProvisional.get(i).getValor(); /** Para ver si tenemos escalera lo unico que tenemos que ver es si tenemos 5 cartas seguidas*/
+            if((i+1) < numCartas) {
+
+                valorActual = manoProvisional.get(i).getValor();
                 valorSiguiente = manoProvisional.get(i+1).getValor();
 
                 if(valorActual+1 == valorSiguiente) {
@@ -436,9 +443,10 @@ public class Jugador {
                 valorCartaAlta = manoProvisional.get(i).getValor();
         }
 
-        /** Ahora vamos a ver si tenemos color, trio, pareja, doble pareja, full o poker*/
+        /** Ahora vamos a ver si tenemos color, trio, pareja, doble pareja, full o poker
+         *  El array es hasta 13 porque como hemos inicializado antes, valor de la carta = posicion(j)+2 */
 
-        for(int j=0; j<13; j++) { /** El array es hasta 13 porque como hemos inicializado antes, valor de la carta = posicion(j)+2 */
+        for(int j=0; j<13; j++) {
 
             /** PARA PAREJAS O DOBLES PAREJAS */
 
@@ -471,20 +479,18 @@ public class Jugador {
             }
             /** PARA POKER */
 
-            if (numeroCarta[j] == 4) { // Tenemos poker
+            if (numeroCarta[j] == 4) {
                 poker = true;
                 valorPoker = j + 2;
             }
         }
 
-        /** COLOR VALORADO ANTERIORMENTE */
+        /** OBSERVACION 1: Para escalera no hace falta valorar dado que si anteriormente escalera = true
+         *               ya sabemos que tenemos escalera.
+         *
+         * OBSERVACION 2: Color valorado anteriormente.*/
 
-
-        /** OBSERVACION: Para escalera no hace falta valorar dado que si anteriormente escalera = true
-         *               ya sabemos que tenemos escalera. */
-
-
-        /** Ahora habra que devolver la mejor mano */
+        /** Ahora damos el valor de la mejor mano del jugador, sin tener en cuenta la ponderacion */
 
         if (escaleraColor == false){
             if(poker == false){
@@ -496,21 +502,21 @@ public class Jugador {
                                     if((pareja1 == false) &&(pareja2 == false)){
                                         this.valorMano = 1;
                                     }else
-                                        this.valorMano = 2; // Tenemos Pareja
+                                        this.valorMano = 2;
                                 }else
-                                    this.valorMano = 3; // Tenemos Doble Pareja
+                                    this.valorMano = 3;
                             }else
-                                this.valorMano = 4; // Tenemos trio
+                                this.valorMano = 4;
                         }else
-                            this.valorMano = 5; // Tenemos Escalera
+                            this.valorMano = 5;
                     }else
-                        this.valorMano = 6; // Tenemos Color
+                        this.valorMano = 6;
                 }else
-                    this.valorMano = 7; // Tenemos Full
+                    this.valorMano = 7;
             }else
-                this.valorMano = 8; // Tenemos Poker
+                this.valorMano = 8;
         }else
-            this.valorMano = 9; // Tenemos Escalera de color
+            this.valorMano = 9;
 
         /** valorMano = 1 ---> CARTA ALTA
          *              2 ---> PAREJA
@@ -526,30 +532,23 @@ public class Jugador {
 
         mejorMano[1] = ponderarMano(valorCartaAlta, cor, pic, diam, valorPareja1, valorPareja2,
                 valorPoker, valorTrio, valorFull,valorColor, valorEscaleraFinal);
+
         /** Ya tenemos el valor de nuestra mejor mano pero para apostar debemos hacer una consulta al sistema borroso
-         *  y tomar una decision, de si apostar, pasar o irse, todo esto dependiendo de los jugadores que haya aun en la mesa
+         *  y tomar una decision, de si apostar, pasar o irse, todo esto dependiendo de los jugadores que haya aun en la mesa,
          *  cuantas fichas tengamos y sobre todo nuestra mano */
 
         return mejorMano;
     }
 
     /** Metodo creado para ponderar las mano mano que tenemos nosotros con la mejor de la mesa, es decir,
-     * comparamos el valor que nos devuelve el metodo anterior (calcularMejorMano)
-     *
-     * NOTA: No sería mejor tener un atributo que guarde el valor de la mejor mano para no tener que volver a llamar al metodo
-     *       y asi evitar calcular de nuevo la mejor mano. (añadido, si no resulta util, buscar otra forma)*/
-
+     * comparamos el valor que nos devuelve el metodo anterior (calcularMejorMano) */
 
     public double ponderarMano(int valorCartaAlta, boolean cor, boolean pic, boolean diam, int valorPareja1, int valorPareja2,
                                int valorPoker, int valorTrio, int []valorFull,int valorColor, int valorEscaleraFinal){
 
         double ponderacion = 0.0;
 
-        /** En el metodo recibimos la mejor combinacion que tenemos respecto de todas las cartas
-         *
-         * PONDERACION = ((valorCartasEnMano*tipoDeMano)*(valorCartasMejorMano*tipoMejorMano))/(valorMejorCartasMesa*tipoMejorManoMesa)
-         *
-         * NOTA: LA ECUACION ANTERIOR TIENE UN PROBLEMA, CUANDO NO HAY CARTAS EN MESA, POR LO TANTO HAY QUE TRATAR ESE CASO DE MANERA ESPECIAL*/
+        /** En el metodo recibimos la mejor combinacion que tenemos respecto de todas las cartas*/
 
         /**Para cartas en mano*/
 
@@ -575,7 +574,7 @@ public class Jugador {
         boolean picComun = false;
         boolean diamComun = false;
 
-        int contCorazonesComun = 0;        /** Son los contadores para tener el recuento de las veces que se repite un determinado palo*/
+        int contCorazonesComun = 0;  /** Son los contadores para tener el recuento de las veces que se repite un determinado palo*/
         int contPicasComun = 0;
         int contDiamantesComun = 0;
         int contTrebolesComun = 0;
@@ -602,6 +601,12 @@ public class Jugador {
         for(int j=0; j<2; j++)
             valorFullComun[j] = 0;
 
+        /** Variables que se utilizan para la ponderacion */
+
+        int ponComun = 0;
+        int ponEnMano = 0;
+        int ponMejorMano = 0;
+
         /** Valoramos que tenemos en nuestra mano*/
 
         if(cartasEnMano[0].getValor() == cartasEnMano[1].getValor())
@@ -622,12 +627,14 @@ public class Jugador {
         });
 
         /**
-         * Contamos cuantas cartas hay de cada palo, y se valora si hay COLOR
+         * Contamos cuantas cartas hay de cada palo, y se valora si hay COLOR.
+         * Una vez ordenado, cogemos cada carta por separado y vemos de que palo es.
+         * Despues aumentamos el contador de dicho palo para llevar el recuento.
          */
         for(int i=0; i< cartasComunes.size(); i++){
 
-            if (cartasComunes.get(i).getPalo() == 1) {    /** Una vez ordenado, cogemos cada carta por separado y vemos de que palo es*/
-                contCorazonesComun++;                     /** Despues aumentamos el contador de dicho palo para llevar el recuento */
+            if (cartasComunes.get(i).getPalo() == 1) {
+                contCorazonesComun++;
                 if(contCorazonesComun > 4) {
                     valorColorComun = cartasComunes.get(i).getValor();      /** Guarda el valor mas alto del color */
                     colorComun = true;
@@ -661,12 +668,17 @@ public class Jugador {
 
             }
 
-            numeroDeLaCartaComun = cartasComunes.get(i).getValor();    /** Guardamos el valor de carta en la posicion valor - 2 (para ahorrar espacio) */
+            /** Guardamos el valor de carta en la posicion valor - 2 (para ahorrar espacio) */
+
+            numeroDeLaCartaComun = cartasComunes.get(i).getValor();
             numeroCartaComun[numeroDeLaCartaComun - 2] = numeroCartaComun[numeroDeLaCartaComun - 2] + 1;
 
-            if((i+1) < cartasComunes.size()) {              /** Se comprueba si hay mas cartas en la mano, en cuyo caso se pasa a comprobar si hay escalera o no*/
+            /** Se comprueba si hay mas cartas en la mano, en cuyo caso se pasa a comprobar si hay escalera o no
+             *  Para ver si tenemos escalera lo unico que tenemos que ver es si tenemos 5 cartas seguidas */
 
-                valorActualComun = cartasComunes.get(i).getValor(); /** Para ver si tenemos escalera lo unico que tenemos que ver es si tenemos 5 cartas seguidas*/
+            if((i+1) < cartasComunes.size()) {
+
+                valorActualComun = cartasComunes.get(i).getValor();
                 valorSiguienteComun = cartasComunes.get(i+1).getValor();
 
                 if(valorActualComun+1 == valorSiguienteComun) {
@@ -733,7 +745,9 @@ public class Jugador {
                 valorCartaAltaComun = cartasComunes.get(i).getValor();
         }
 
-        for(int j=0; j<13; j++) { /** El array es hasta 13 porque, como hemos inicializado antes, valor de la carta = posicion(j)+2 */
+        /** El array es hasta 13 porque, como hemos inicializado antes, valor de la carta = posicion(j)+2 */
+
+        for(int j=0; j<13; j++) {
 
             /** PARA PAREJAS O DOBLES PAREJAS */
 
@@ -772,10 +786,6 @@ public class Jugador {
             }
         }
 
-        /** COLOR VALORADO ANTERIORMENTE */
-
-        /** Ahora habra que devolver la mejor mano */
-
         if (escaleraColorComun == false){
             if(pokerComun == false){
                 if(fullComun == false){
@@ -803,11 +813,6 @@ public class Jugador {
             valorManoComun = 9; // Tenemos Escalera de color en mesa
 
         /**Procedemos a hacer la ponderacion de la mano*/
-
-
-        int ponComun = 0;
-        int ponEnMano = 0;
-        int ponMejorMano = 0;
 
         if(parMano !=0 )
             ponEnMano = parMano;
