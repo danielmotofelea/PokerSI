@@ -711,7 +711,6 @@ public class Mesa {
                     i = 0;
                     //System.out.println("Jugador" + sigLibre % 8 + " Sube");
                     //quitar fichas
-                    //Habria que controlar que el jugador tenga las fichas necesarias (No se si lo controla el borroso)
                     jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichas(jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichas()-decision);
                     //Acrualizar fichas apostadas del jugador
                     jugadoresMesa.get(sigLibre % jugadoresMesa.size()).setFichasApostadas(decision);
@@ -729,7 +728,7 @@ public class Mesa {
                     if (decision == 0) {
                         if (jugadoresMesa.get(sigLibre % jugadoresMesa.size()).getFichasApostadas() == maxApuestaActual) {
                             //El jugador puede pasar
-                            //Si pasa no deberia hacer nada aqui, o eso es lo que creo de momento
+                            //Si pasa no hace nada
                            // System.out.println("Jugador " + sigLibre % 8 + " Pasa");
                         } else {
                             //El jugador no va
