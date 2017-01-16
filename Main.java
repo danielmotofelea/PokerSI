@@ -316,16 +316,28 @@ public class Main {
                     }
                 }
 
+                varianza=varianza/finalistas.size();
+
                 if(numGeneracion%10!=0){
                     fitnessGrafica+=(mejorFitness1+mejorFitness2)/2;
+                    desviacionGrafica+=sqrt(varianza);
                 }else{
-                    fic2.println("Generaciones"+(numGeneracion-10)+" a "+numGeneracion);
-                    fic2.println(fitnessGrafica/10);
-                    fitnessGrafica=0;
-                    aux2=0;
-                }
 
-                varianza=varianza/finalistas.size();
+                    if(numGeneracion==10) {
+                        fic2.println("Generaciones " + (numGeneracion - 9) + " a " + numGeneracion);
+                        fic2.println("Media de los fitness: " + fitnessGrafica / 9);
+                        fic2.println("Desviacion media de los fitness: " + desviacionGrafica / 9);
+                    }
+                    else{
+                        fic2.println("Generaciones " + (numGeneracion - 10) + " a " + numGeneracion);
+                        fic2.println("Media de los fitness: " + fitnessGrafica / 10);
+                        fic2.println("Desviacion media de los fitness: " + desviacionGrafica / 10);
+                    }
+                    fic2.println("/////////////////");
+                    fitnessGrafica=(mejorFitness1+mejorFitness2)/2;
+                    desviacionGrafica=sqrt(varianza);
+                }
+                
                 salida2.println("La media de los dos mejores fitness de la generacion "+numGeneracion+" es "+(mejorFitness1+mejorFitness2)/2);
                 salida2.println("La desviacion de los fitness de la generacion "+numGeneracion+" es "+ sqrt(varianza));
                 salida2.println();
